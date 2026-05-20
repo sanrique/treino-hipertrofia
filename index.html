@@ -41,8 +41,8 @@
   .card.done { opacity: 0.45; border-color: var(--green); }
 
   /* ANIMATION BOX */
-  .anim-box { height: 110px; background: #0d0d0d; border-radius: 12px; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; border: 1px solid #1a1a1a; overflow: hidden; position: relative; }
-  .anim-box svg { width: 110px; height: 110px; }
+  .anim-box { height: 180px; background: #04090f; border-radius: 12px; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; border: 1px solid #0d1e3a; overflow: hidden; position: relative; }
+  .anim-box svg { height: 100%; width: auto; }
   .anim-label { position: absolute; bottom: 6px; right: 10px; font-size: 9px; color: #444; letter-spacing: 1px; text-transform: uppercase; font-family: 'Bebas Neue', sans-serif; }
 
   .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
@@ -975,7 +975,107 @@
 </div>
 
 <script>
-// SVG ANIMATIONS
+// ANATOMY BODY SYSTEM
+const BODY_BASE = `
+  <defs>
+    <filter id="bglow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="rglow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <ellipse cx="50" cy="13" rx="9" ry="11" fill="#0a1525" stroke="#3377ee" stroke-width="1.2" filter="url(#bglow)"/>
+  <path d="M44,23 L56,23 L57,32 L43,32 Z" fill="#0a1525" stroke="#3377ee" stroke-width="1" filter="url(#bglow)"/>
+  <path d="M30,32 L70,32 L68,58 L65,78 L57,86 L43,86 L35,78 L32,58 Z" fill="#0a1525" stroke="#3377ee" stroke-width="1.2" filter="url(#bglow)"/>
+  <path d="M28,35 L18,63 L25,65 L33,38 Z" fill="#0a1525" stroke="#3377ee" stroke-width="1" filter="url(#bglow)"/>
+  <path d="M18,63 L14,84 L21,85 L25,65 Z" fill="#0a1525" stroke="#3377ee" stroke-width="1" filter="url(#bglow)"/>
+  <path d="M72,35 L82,63 L75,65 L67,38 Z" fill="#0a1525" stroke="#3377ee" stroke-width="1" filter="url(#bglow)"/>
+  <path d="M82,63 L86,84 L79,85 L75,65 Z" fill="#0a1525" stroke="#3377ee" stroke-width="1" filter="url(#bglow)"/>
+  <path d="M34,87 L31,124 L43,125 L44,87 Z" fill="#0a1525" stroke="#3377ee" stroke-width="1" filter="url(#bglow)"/>
+  <path d="M31,124 L29,160 L41,160 L43,125 Z" fill="#0a1525" stroke="#3377ee" stroke-width="1" filter="url(#bglow)"/>
+  <path d="M56,87 L57,124 L69,125 L66,87 Z" fill="#0a1525" stroke="#3377ee" stroke-width="1" filter="url(#bglow)"/>
+  <path d="M57,124 L59,160 L71,160 L69,125 Z" fill="#0a1525" stroke="#3377ee" stroke-width="1" filter="url(#bglow)"/>
+  <ellipse cx="17" cy="88" rx="4" ry="5" fill="#0a1525" stroke="#3377ee" stroke-width="0.8" filter="url(#bglow)"/>
+  <ellipse cx="83" cy="88" rx="4" ry="5" fill="#0a1525" stroke="#3377ee" stroke-width="0.8" filter="url(#bglow)"/>
+  <path d="M26,160 L43,160 L42,165 L27,165 Z" fill="#0a1525" stroke="#3377ee" stroke-width="0.8" filter="url(#bglow)"/>
+  <path d="M57,160 L74,160 L73,165 L58,165 Z" fill="#0a1525" stroke="#3377ee" stroke-width="0.8" filter="url(#bglow)"/>
+  <line x1="50" y1="32" x2="50" y2="86" stroke="#1a44bb" stroke-width="0.8" opacity="0.6"/>
+  <path d="M50,38 Q42,40 38,44" stroke="#1a44bb" stroke-width="0.7" fill="none" opacity="0.5"/>
+  <path d="M50,44 Q42,46 37,50" stroke="#1a44bb" stroke-width="0.7" fill="none" opacity="0.5"/>
+  <path d="M50,50 Q42,52 38,56" stroke="#1a44bb" stroke-width="0.7" fill="none" opacity="0.5"/>
+  <path d="M50,38 Q58,40 62,44" stroke="#1a44bb" stroke-width="0.7" fill="none" opacity="0.5"/>
+  <path d="M50,44 Q58,46 63,50" stroke="#1a44bb" stroke-width="0.7" fill="none" opacity="0.5"/>
+  <path d="M50,50 Q58,52 62,56" stroke="#1a44bb" stroke-width="0.7" fill="none" opacity="0.5"/>
+  <line x1="50" y1="33" x2="30" y2="36" stroke="#1a44bb" stroke-width="0.9" opacity="0.6"/>
+  <line x1="50" y1="33" x2="70" y2="36" stroke="#1a44bb" stroke-width="0.9" opacity="0.6"/>
+  <path d="M35,78 Q50,72 65,78 L63,86 Q50,88 37,86 Z" stroke="#1a44bb" stroke-width="0.7" fill="none" opacity="0.5"/>
+  <circle cx="37" cy="124" r="3.5" fill="none" stroke="#1a44bb" stroke-width="0.8" opacity="0.6"/>
+  <circle cx="63" cy="124" r="3.5" fill="none" stroke="#1a44bb" stroke-width="0.8" opacity="0.6"/>
+  <circle cx="30" cy="36" r="3" fill="none" stroke="#1a44bb" stroke-width="0.8" opacity="0.6"/>
+  <circle cx="70" cy="36" r="3" fill="none" stroke="#1a44bb" stroke-width="0.8" opacity="0.6"/>
+  <circle cx="22" cy="64" r="2.5" fill="none" stroke="#1a44bb" stroke-width="0.7" opacity="0.6"/>
+  <circle cx="78" cy="64" r="2.5" fill="none" stroke="#1a44bb" stroke-width="0.7" opacity="0.6"/>
+`;
+
+const MUSCLE_PATHS = {
+  'chest':       ['M34,35 Q50,32 66,35 L64,57 Q50,61 36,57 Z'],
+  'front-delt':  ['M27,33 Q21,38 20,46 Q26,50 30,46 Q31,39 30,33 Z','M73,33 Q79,38 80,46 Q74,50 70,46 Q69,39 70,33 Z'],
+  'side-delt':   ['M24,32 Q17,39 18,49 Q23,52 27,48 Q27,40 26,33 Z','M76,32 Q83,39 82,49 Q77,52 73,48 Q73,40 74,33 Z'],
+  'rear-delt':   ['M23,33 Q16,40 17,50 Q22,53 26,49 Q26,41 25,34 Z','M77,33 Q84,40 83,50 Q78,53 74,49 Q74,41 75,34 Z'],
+  'biceps':      ['M29,42 Q20,53 20,64 Q25,67 28,64 Q30,53 32,44 Z','M71,42 Q80,53 80,64 Q75,67 72,64 Q70,53 68,44 Z'],
+  'triceps':     ['M26,40 Q17,51 17,62 Q22,65 25,62 Q27,52 29,42 Z','M74,40 Q83,51 83,62 Q78,65 75,62 Q73,52 71,42 Z'],
+  'trap':        ['M40,27 Q50,24 60,27 L67,34 Q50,37 33,34 Z'],
+  'lat':         ['M32,42 Q27,58 29,74 Q35,77 38,74 Q36,60 34,45 Z','M68,42 Q73,58 71,74 Q65,77 62,74 Q64,60 66,45 Z'],
+  'quad':        ['M34,88 Q31,108 33,124 Q39,126 43,124 Q42,107 41,88 Z','M66,88 Q69,108 67,124 Q61,126 57,124 Q58,107 59,88 Z'],
+  'ham':         ['M32,88 Q29,107 31,124 Q36,126 37,124 Q35,107 34,89 Z','M68,88 Q71,107 69,124 Q64,126 63,124 Q65,107 66,89 Z'],
+  'glute':       ['M31,85 Q28,93 30,102 Q36,105 41,102 Q40,94 37,85 Z','M69,85 Q72,93 70,102 Q64,105 59,102 Q60,94 63,85 Z'],
+  'calf':        ['M33,127 Q30,142 32,158 Q38,160 42,158 Q41,142 39,127 Z','M67,127 Q70,142 68,158 Q62,160 58,158 Q59,142 61,127 Z'],
+};
+
+const EXERCISE_MUSCLES = {
+  'bench':          ['chest','front-delt','triceps'],
+  'incline':        ['chest','front-delt','triceps'],
+  'chest-fly':      ['chest','front-delt'],
+  'tricep-down':    ['triceps'],
+  'skull-crusher':  ['triceps','front-delt'],
+  'pulldown':       ['lat','biceps','rear-delt'],
+  'cable-row':      ['lat','rear-delt','biceps','trap'],
+  'preacher-curl':  ['biceps'],
+  'curl':           ['biceps'],
+  'squat':          ['quad','glute','ham'],
+  'leg-press':      ['quad','glute','ham'],
+  'leg-extension':  ['quad'],
+  'lying-leg-curl': ['ham','glute'],
+  'seated-leg-curl':['ham'],
+  'calf-raise':     ['calf'],
+  'overhead-press': ['front-delt','side-delt','triceps','trap'],
+  'lateral-raise':  ['side-delt','trap'],
+  'front-raise':    ['front-delt','trap'],
+  'shrug':          ['trap'],
+  'upright-row':    ['trap','side-delt','biceps'],
+};
+
+function makeBodySVG(activeList) {
+  const active = new Set(activeList);
+  let mp = '';
+  for (const [name, paths] of Object.entries(MUSCLE_PATHS)) {
+    const on = active.has(name);
+    for (const d of paths) {
+      if (on) {
+        mp += `<path d="${d}" fill="#ff2200" opacity="0.1" filter="url(#rglow)">
+          <animate attributeName="opacity" values="0.1;0.9;0.1" dur="1.6s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+          <animate attributeName="fill" values="#ff2200;#ff7700;#ff2200" dur="1.6s" repeatCount="indefinite" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+        </path>`;
+      } else {
+        mp += `<path d="${d}" fill="#1a2d55" opacity="0.25"/>`;
+      }
+    }
+  }
+  return `<svg viewBox="0 0 100 170" xmlns="http://www.w3.org/2000/svg">${BODY_BASE}${mp}</svg>`;
+}
+
+// LEGACY BLOCK (replaced — kept as placeholder for edit boundary)
 const ANIMS = {
 'bench': `<svg viewBox="0 0 90 65" fill="none" xmlns="http://www.w3.org/2000/svg">
 <rect x="6" y="36" width="64" height="5" rx="2" fill="#1c1c1c" stroke="#2a2a2a" stroke-width="1"/>
@@ -1268,15 +1368,13 @@ const ANIMS = {
 </g></svg>`
 };
 
-// INJECT ANIMATIONS
+// INJECT ANATOMY ANIMATIONS
 function injectAnims() {
   document.querySelectorAll('.anim-box[data-anim]').forEach(box => {
-    const svg = ANIMS[box.dataset.anim];
-    if (svg) {
-      const label = box.querySelector('.anim-label');
-      box.innerHTML = svg;
-      if (label) box.appendChild(label);
-    }
+    const muscles = EXERCISE_MUSCLES[box.dataset.anim] || [];
+    const label = box.querySelector('.anim-label');
+    box.innerHTML = makeBodySVG(muscles);
+    if (label) box.appendChild(label);
   });
 }
 
