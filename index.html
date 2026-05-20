@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Treino Hipertrofia</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --card: #141414;
+    --card2: #1c1c1c;
+    --border: #2a2a2a;
+    --red: #e63946;
+    --red-dim: rgba(230,57,70,0.15);
+    --white: #f0f0f0;
+    --gray: #888;
+    --light: #ccc;
+    --green: #2ecc71;
+    --yellow: #f4d03f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--white); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+
+  header { padding: 32px 24px 0; max-width: 900px; margin: 0 auto; }
+  header h1 { font-family: 'Bebas Neue', sans-serif; font-size: 42px; letter-spacing: 3px; }
+  header p { color: var(--gray); font-size: 13px; margin-top: 4px; }
+
+  .tabs { display: flex; gap: 8px; padding: 24px 24px 0; max-width: 900px; margin: 0 auto; }
+  .tab { flex: 1; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; text-align: center; font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; color: var(--gray); transition: all 0.2s; }
+  .tab:hover { border-color: var(--red); color: var(--white); }
+  .tab.active { background: var(--red); border-color: var(--red); color: #fff; }
+  .tab small { display: block; font-family: 'DM Sans', sans-serif; font-size: 10px; letter-spacing: 0; opacity: 0.7; margin-top: 2px; }
+
+  .content { display: none; max-width: 900px; margin: 0 auto; padding: 20px 24px 60px; }
+  .content.active { display: block; }
+
+  .section-label { font-family: 'Bebas Neue', sans-serif; font-size: 13px; letter-spacing: 4px; color: var(--red); margin: 28px 0 12px; padding-left: 2px; }
+
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 12px; transition: border-color 0.2s, opacity 0.2s; }
+  .card.done { opacity: 0.45; border-color: var(--green); }
+
+  /* ANIMATION BOX */
+  .anim-box { height: 110px; background: #0d0d0d; border-radius: 12px; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; border: 1px solid #1a1a1a; overflow: hidden; position: relative; }
+  .anim-box svg { width: 110px; height: 110px; }
+  .anim-label { position: absolute; bottom: 6px; right: 10px; font-size: 9px; color: #444; letter-spacing: 1px; text-transform: uppercase; font-family: 'Bebas Neue', sans-serif; }
+
+  .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .card-left { flex: 1; }
+  .ex-name { font-size: 16px; font-weight: 600; color: var(--white); line-height: 1.3; }
+  .ex-name-pt { font-size: 11px; color: var(--gray); margin-top: 2px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .badge { font-size: 10px; padding: 3px 8px; border-radius: 20px; font-weight: 500; }
+  .badge-muscle { background: var(--red-dim); color: var(--red); border: 1px solid rgba(230,57,70,0.3); }
+  .badge-diff-easy { background: #1a2a1a; color: #2ecc71; }
+  .badge-diff-medium { background: #2a2210; color: #f4d03f; }
+  .badge-diff-hard { background: #2a1010; color: #e63946; }
+
+  .check-btn { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--border); background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--gray); transition: all 0.2s; flex-shrink: 0; }
+  .check-btn:hover { border-color: var(--green); color: var(--green); }
+  .card.done .check-btn { border-color: var(--green); background: #1a3a1a; color: var(--green); }
+
+  .stats { display: flex; gap: 6px; margin-top: 14px; flex-wrap: wrap; }
+  .stat { background: var(--card2); border-radius: 10px; padding: 8px 12px; text-align: center; flex: 1; min-width: 70px; }
+  .stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--white); letter-spacing: 1px; }
+  .stat-lbl { font-size: 9px; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; }
+
+  .intensity-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+  .intensity-label { font-size: 10px; color: var(--gray); white-space: nowrap; }
+  .intensity-bar { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .intensity-fill { height: 100%; border-radius: 2px; }
+
+  .details { margin-top: 14px; display: none; }
+  .details.open { display: block; }
+  .detail-title { font-size: 10px; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .detail-text { font-size: 13px; color: var(--light); line-height: 1.5; }
+  .tip { background: var(--card2); border-left: 3px solid var(--red); border-radius: 6px; padding: 8px 12px; font-size: 12px; color: var(--light); margin-top: 6px; }
+  .error-tip { background: #1c1010; border-left: 3px solid #e63946; border-radius: 6px; padding: 8px 12px; font-size: 12px; color: #e88; margin-top: 6px; }
+
+  .weight-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; background: var(--card2); border-radius: 10px; padding: 10px 14px; }
+  .weight-row label { font-size: 11px; color: var(--gray); flex: 1; }
+  .weight-input { width: 80px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--white); font-size: 14px; font-weight: 600; padding: 6px 10px; text-align: center; font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px; }
+  .weight-input:focus { outline: none; border-color: var(--red); }
+  .weight-unit { font-size: 11px; color: var(--gray); }
+
+  .toggle-btn { width: 100%; background: none; border: none; color: var(--gray); font-size: 11px; cursor: pointer; padding: 8px 0 0; text-align: left; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+  .toggle-btn:hover { color: var(--white); }
+  .toggle-icon { transition: transform 0.2s; }
+  .toggle-btn.open .toggle-icon { transform: rotate(180deg); }
+
+  .weekly { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-top: 32px; }
+  .weekly h2 { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; margin-bottom: 16px; }
+  .week-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .week-day { background: var(--card2); border-radius: 10px; padding: 14px 10px; text-align: center; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; }
+  .week-day:hover { border-color: var(--red); }
+  .week-day.done-day { border-color: var(--green); background: #111a11; }
+  .week-day-letter { font-family: 'Bebas Neue', sans-serif; font-size: 28px; }
+  .week-day-label { font-size: 10px; color: var(--gray); margin-top: 2px; }
+  .week-day-status { font-size: 18px; margin-top: 6px; }
+
+  .notes-area { margin-top: 16px; }
+  .notes-area label { font-size: 10px; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 6px; }
+  .notes-area textarea { width: 100%; background: var(--card2); border: 1px solid var(--border); border-radius: 10px; color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 12px; resize: vertical; min-height: 80px; }
+  .notes-area textarea:focus { outline: none; border-color: var(--red); }
+
+  @media(max-width:600px) {
+    header h1 { font-size: 32px; }
+    .week-grid { grid-template-columns: repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>TREINO HIPERTROFIA</h1>
+  <p>Programa de ganho de massa muscular para ectomorfo · Progressão de carga semanal</p>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('a')">A<small>Peito & Tríceps</small></div>
+  <div class="tab" onclick="switchTab('b')">B<small>Costas & Bíceps</small></div>
+  <div class="tab" onclick="switchTab('c')">C<small>Pernas</small></div>
+  <div class="tab" onclick="switchTab('d')">D<small>Ombro & Trapézio</small></div>
+</div>
+
+<!-- ===== TREINO A ===== -->
+<div class="content active" id="tab-a">
+  <div class="section-label">— PEITO</div>
+
+  <div class="card" id="card-a1">
+    <div class="anim-box" data-anim="bench"><span class="anim-label">Supino Reto</span></div>
+    <div class="card-top">
+      <div class="card-left">
+        <div class="ex-name">Supino Reto</div>
+        <div class="ex-name-pt">Flat Bench Press</div>
+        <div class="badges">
+          <span class="badge badge-muscle">Peitoral Maior</span>
+          <span class="badge badge-muscle">Deltóide Ant.</span>
+          <span class="badge badge-muscle">Tríceps</span>
+          <span class="badge badge-diff-medium">⬥ Médio</span>
+        </div>
+      </div>
+      <button class="check-btn" onclick="toggleDone('a1')">✓</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">4</div><div class="stat-lbl">Séries</div></div>
+      <div class="stat"><div class="stat-val">8–12</div><div class="stat-lbl">Reps</div></div>
+      <div class="stat"><div class="stat-val">90s</div><div class="stat-lbl">Descanso</div></div>
+    </div>
+    <div class="intensity-row">
+      <span class="intensity-label">Intensidade</span>
+      <div class="intensity-bar"><div class="intensity-fill" style="width:72%;background:var(--yellow)"></div></div>
+    </div>
+    <div class="weight-row">
+      <label>💪 Carga atual</label>
+      <input class="weight-input" type="number" id="w-a1" placeholder="0" oninput="saveWeight('a1',this.value)" min="0" step="2.5">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleDetails('det-a1',this)"><span class="toggle-icon">▾</span> Ver execução e dicas</button>
+    <div class="details" id="det-a1">
+      <div class="detail-title">Execução</div>
+      <div class="detail-text">Deite no banco, pés no chão. Retraia as escápulas e mantenha-as pressionadas. Desça a barra controlado até o peito e empurre explodindo.</div>
+      <div class="tip">✅ Retraia as escápulas antes de descer · Controle na descida (2–3s)</div>
+      <div class="error-tip">⚠ Erro: quicar a barra no peito · Não trave os cotovelos</div>
+    </div>
+  </div>
+
+  <div class="card" id="card-a2">
+    <div class="anim-box" data-anim="incline"><span class="anim-label">Supino Inclinado</span></div>
+    <div class="card-top">
+      <div class="card-left">
+        <div class="ex-name">Supino Inclinado c/ Halter</div>
+        <div class="ex-name-pt">Incline Dumbbell Press</div>
+        <div class="badges">
+          <span class="badge badge-muscle">Peitoral Superior</span>
+          <span class="badge badge-muscle">Deltóide Ant.</span>
+          <span class="badge badge-diff-medium">⬥ Médio</span>
+        </div>
+      </div>
+      <button class="check-btn" onclick="toggleDone('a2')">✓</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">3</div><div class="stat-lbl">Séries</div></div>
+      <div class="stat"><div class="stat-val">10–12</div><div class="stat-lbl">Reps</div></div>
+      <div class="stat"><div class="stat-val">75s</div><div class="stat-lbl">Descanso</div></div>
+    </div>
+    <div class="intensity-row">
+      <span class="intensity-label">Intensidade</span>
+      <div class="intensity-bar"><div class="intensity-fill" style="width:65%;background:var(--yellow)"></div></div>
+    </div>
+    <div class="weight-row">
+      <label>💪 Carga (cada halter)</label>
+      <input class="weight-input" type="number" id="w-a2" placeholder="0" oninput="saveWeight('a2',this.value)" min="0" step="2">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleDetails('det-a2',this)"><span class="toggle-icon">▾</span> Ver execução e dicas</button>
+    <div class="details" id="det-a2">
+      <div class="detail-text">Banco a 30–45°. Desça os halteres até a linha do peitoral superior. Empurre convergindo levemente no topo.</div>
+      <div class="tip">✅ Ângulo 30–45° · Movimento controlado em ambas as fases</div>
+      <div class="error-tip">⚠ Não abra demais os cotovelos · Evite arquear a lombar</div>
+    </div>
+  </div>
+
+  <div class="card" id="card-a3">
+    <div class="anim-box" data-anim="chest-fly"><span class="anim-label">Voador</span></div>
+    <div class="card-top">
+      <div class="card-left">
+        <div class="ex-name">Voador Máquina</div>
+        <div class="ex-name-pt">Pec Deck Machine</div>
+        <div class="badges">
+          <span class="badge badge-muscle">Peitoral (isolamento)</span>
+          <span class="badge badge-diff-easy">⬥ Fácil</span>
+        </div>
+      </div>
+      <button class="check-btn" onclick="toggleDone('a3')">✓</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">3</div><div class="stat-lbl">Séries</div></div>
+      <div class="stat"><div class="stat-val">12–15</div><div class="stat-lbl">Reps</div></div>
+      <div class="stat"><div class="stat-val">60s</div><div class="stat-lbl">Descanso</div></div>
+    </div>
+    <div class="intensity-row">
+      <span class="intensity-label">Intensidade</span>
+      <div class="intensity-bar"><div class="intensity-fill" style="width:45%;background:var(--green)"></div></div>
+    </div>
+    <div class="weight-row">
+      <label>💪 Carga atual</label>
+      <input class="weight-input" type="number" id="w-a3" placeholder="0" oninput="saveWeight('a3',this.value)" min="0" step="5">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleDetails('det-a3',this)"><span class="toggle-icon">▾</span> Ver execução e dicas</button>
+    <div class="details" id="det-a3">
+      <div class="detail-text">Leve flexão nos cotovelos durante todo o movimento. Sinta o alongamento na abertura e contraia no fechamento.</div>
+      <div class="tip">✅ Cotovelos levemente dobrados · Controle o retorno</div>
+      <div class="error-tip">⚠ Carga excessiva prejudica o isolamento</div>
+    </div>
+  </div>
+
+  <div class="section-label">— TRÍCEPS</div>
+
+  <div class="card" id="card-a4">
+    <div class="anim-box" data-anim="tricep-down"><span class="anim-label">Tríceps Pulley</span></div>
+    <div class="card-top">
+      <div class="card-left">
+        <div class="ex-name">Tríceps Pulley</div>
+        <div class="ex-name-pt">Cable Tricep Pushdown</div>
+        <div class="badges">
+          <span class="badge badge-muscle">Cabeça Lateral</span>
+          <span class="badge badge-diff-easy">⬥ Fácil</span>
+        </div>
+      </div>
+      <button class="check-btn" onclick="toggleDone('a4')">✓</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">4</div><div class="stat-lbl">Séries</div></div>
+      <div class="stat"><div class="stat-val">12–15</div><div class="stat-lbl">Reps</div></div>
+      <div class="stat"><div class="stat-val">60s</div><div class="stat-lbl">Descanso</div></div>
+    </div>
+    <div class="intensity-row">
+      <span class="intensity-label">Intensidade</span>
+      <div class="intensity-bar"><div class="intensity-fill" style="width:48%;background:var(--green)"></div></div>
+    </div>
+    <div class="weight-row">
+      <label>💪 Carga atual</label>
+      <input class="weight-input" type="number" id="w-a4" placeholder="0" oninput="saveWeight('a4',this.value)" min="0" step="5">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleDetails('det-a4',this)"><span class="toggle-icon">▾</span> Ver execução e dicas</button>
+    <div class="details" id="det-a4">
+      <div class="detail-text">Cotovelos fixos ao lado do corpo. Estenda completamente na descida. Retorne controlado.</div>
+      <div class="tip">✅ Cotovelos grudados ao tronco · Extensão completa</div>
+    </div>
+  </div>
+
+  <div class="card" id="card-a5">
+    <div class="anim-box" data-anim="skull-crusher"><span class="anim-label">Tríceps Francês</span></div>
+    <div class="card-top">
+      <div class="card-left">
+        <div class="ex-name">Tríceps Francês</div>
+        <div class="ex-name-pt">French Press / Skull Crushers</div>
+        <div class="badges">
+          <span class="badge badge-muscle">Cabeça Longa</span>
+          <span class="badge badge-diff-hard">⬥ Médio–Difícil</span>
+        </div>
+      </div>
+      <button class="check-btn" onclick="toggleDone('a5')">✓</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">3</div><div class="stat-lbl">Séries</div></div>
+      <div class="stat"><div class="stat-val">10–12</div><div class="stat-lbl">Reps</div></div>
+      <div class="stat"><div class="stat-val">75s</div><div class="stat-lbl">Descanso</div></div>
+    </div>
+    <div class="intensity-row">
+      <span class="intensity-label">Intensidade</span>
+      <div class="intensity-bar"><div class="intensity-fill" style="width:68%;background:var(--yellow)"></div></div>
+    </div>
+    <div class="weight-row">
+      <label>💪 Carga atual</label>
+      <input class="weight-input" type="number" id="w-a5" placeholder="0" oninput="saveWeight('a5',this.value)" min="0" step="2.5">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleDetails('det-a5',this)"><span class="toggle-icon">▾</span> Ver execução e dicas</button>
+    <div class="details" id="det-a5">
+      <div class="detail-text">Cotovelos apontados para cima e fixos. Desça a barra em direção à testa. Estenda completamente no topo.</div>
+      <div class="tip">✅ Cotovelos apontando para o teto · Movimento lento</div>
+      <div class="error-tip">⚠ Erro: abrir os cotovelos para os lados</div>
+    </div>
+  </div>
+
+  <div class="notes-area" style="margin-top:20px">
+    <label>Observações do treino A</label>
+    <textarea id="notes-a" placeholder="Anote como foi o treino, dores, ajustes..." oninput="saveNote('a',this.value)"></textarea>
+  </div>
+</div>
+
+<!-- ===== TREINO B ===== -->
+<div class="content" id="tab-b">
+  <div class="section-label">— COSTAS</div>
+
+  <div class="card" id="card-b1">
+    <div class="anim-box" data-anim="pulldown"><span class="anim-label">Pulley Aberto</span></div>
+    <div class="card-top">
+      <div class="card-left">
+        <div class="ex-name">Pulley Pegada Aberta</div>
+        <div class="ex-name-pt">Wide Grip Lat Pulldown</div>
+        <div class="badges">
+          <span class="badge badge-muscle">Latíssimo</span>
+          <span class="badge badge-muscle">Trapézio Inf.</span>
+          <span class="badge badge-diff-medium">⬥ Médio</span>
+        </div>
+      </div>
+      <button class="check-btn" onclick="toggleDone('b1')">✓</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">4</div><div class="stat-lbl">Séries</div></div>
+      <div class="stat"><div class="stat-val">10–12</div><div class="stat-lbl">Reps</div></div>
+      <div class="stat"><div class="stat-val">90s</div><div class="stat-lbl">Descanso</div></div>
+    </div>
+    <div class="intensity-row">
+      <span class="intensity-label">Intensidade</span>
+      <div class="intensity-bar"><div class="intensity-fill" style="width:70%;background:var(--yellow)"></div></div>
+    </div>
+    <div class="weight-row">
+      <label>💪 Carga atual</label>
+      <input class="weight-input" type="number" id="w-b1" placeholder="0" oninput="saveWeight('b1',this.value)" min="0" step="5">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleDetails('det-b1',this)"><span class="toggle-icon">▾</span> Ver execução e dicas</button>
+    <div class="details" id="det-b1">
+      <div class="detail-text">Incline levemente o tronco. Deprima as escápulas antes de puxar. Leve a barra até o peitoral superior.</div>
+      <div class="tip">✅ Deprima a escápula antes de puxar · Cotovelos para baixo</div>
+      <div class="error-tip">⚠ Não use o bíceps — pense em "cotuvelar"</div>
+    </div>
+  </div>
+
+  <div class="card" id="card-b2">
+    <div class="anim-box" data-anim="pulldown"><span class="anim-label">Pulley Fechado</span></div>
+    <div class="card-top">
+      <div class="card-left">
+        <div class="ex-name">Pulley Pegada Fechada</div>
+        <div class="ex-name-pt">Close Grip Pulldown</div>
+        <div class="badges">
+          <span class="badge badge-muscle">Latíssimo (espessura)</span>
+          <span class="badge badge-diff-medium">⬥ Médio</span>
+        </div>
+      </div>
+      <button class="check-btn" onclick="toggleDone('b2')">✓</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">3</div><div class="stat-lbl">Séries</div></div>
+      <div class="stat"><div class="stat-val">12</div><div class="stat-lbl">Reps</div></div>
+      <div class="stat"><div class="stat-val">75s</div><div class="stat-lbl">Descanso</div></div>
+    </div>
+    <div class="intensity-row">
+      <span class="intensity-label">Intensidade</span>
+      <div class="intensity-bar"><div class="intensity-fill" style="width:60%;background:var(--yellow)"></div></div>
+    </div>
+    <div class="weight-row">
+      <label>💪 Carga atual</label>
+      <input class="weight-input" type="number" id="w-b2" placeholder="0" oninput="saveWeight('b2',this.value)" min="0" step="5">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleDetails('det-b2',this)"><span class="toggle-icon">▾</span> Ver execução</button>
+    <div class="details" id="det-b2">
+      <div class="detail-text">Puxe até o queixo, esprema a contração por 1s. Retorne lentamente.</div>
+      <div class="tip">✅ Aperte a contração embaixo · Pegada neutra ou supinada</div>
+    </div>
+  </div>
+
+  <div class="card" id="card-b3">
+    <div class="anim-box" data-anim="cable-row"><span class="anim-label">Remada Unilateral</span></div>
+    <div class="card-top">
+      <div class="card-left">
+        <div class="ex-name">Remada Baixa Unilateral</div>
+        <div class="ex-name-pt">Single Arm Cable Row</div>
+        <div class="badges">
+          <span class="badge badge-muscle">Rombóides</span>
+          <span class="badge badge-muscle">Trapézio Médio</span>
+          <span class="badge badge-diff-medium">⬥ Médio</span>
+        </div>
+      </div>
+      <button class="check-btn" onclick="toggleDone('b3')">✓</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">3</div><div class="stat-lbl">Séries</div></div>
+      <div class="stat"><div class="stat-val">12/lado</div><div class="stat-lbl">Reps</div></div>
+      <div class="stat"><div class="stat-val">60s</div><div class="stat-lbl">Descanso</div></div>
+    </div>
+    <div class="intensity-row">
+      <span class="intensity-label">Intensidade</span>
+      <div class="intensity-bar"><div class="intensity-fill" style="width:55%;background:var(--green)"></div></div>
+    </div>
+    <div class="weight-row">
+      <label>💪 Carga atual</label>
+      <input class="weight-input" type="number" id="w-b3" placeholder="0" oninput="saveWeight('b3',this.value)" min="0" step="2.5">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleDetails('det-b3',this)"><span class="toggle-icon">▾</span> Ver execução</button>
+    <div class="details" id="det-b3">
+      <div class="detail-text">Coluna neutra. Puxe o cotovelo para trás, retração máxima da escápula. Não rotacione o tronco.</div>
+      <div class="tip">✅ Coluna neutra · Foco na retração escapular</div>
+    </div>
+  </div>
+
+  <div class="section-label">— BÍCEPS</div>
+
+  <div class="card" id="card-b4">
+    <div class="anim-box" data-anim="preacher-curl"><span class="anim-label">Rosca Scott</span></div>
+    <div class="card-top">
+      <div class="card-left">
+        <div class="ex-name">Rosca Scott</div>
+        <div class="ex-name-pt">Preacher Curl</div>
+        <div class="badges">
+          <span class="badge badge-muscle">Bíceps (isolamento)</span>
+          <span class="badge badge-diff-easy">⬥ Fácil–Médio</span>
+        </div>
+      </div>
+      <button class="check-btn" onclick="toggleDone('b4')">✓</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">3</div><div class="stat-lbl">Séries</div></div>
+      <div class="stat"><div class="stat-val">10–12</div><div class="stat-lbl">Reps</div></div>
+      <div class="stat"><div class="stat-val">75s</div><div class="stat-lbl">Descanso</div></div>
+    </div>
+    <div class="intensity-row">
+      <span class="intensity-label">Intensidade</span>
+      <div class="intensity-bar"><div class="intensity-fill" style="width:50%;background:var(--green)"></div></div>
+    </div>
+    <div class="weight-row">
+      <label>💪 Carga atual</label>
+      <input class="weight-input" type="number" id="w-b4" placeholder="0" oninput="saveWeight('b4',this.value)" min="0" step="2.5">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleDetails('det-b4',this)"><span class="toggle-icon">▾</span> Ver execução</button>
+    <div class="details" id="det-b4">
+      <div class="detail-text">Apoie o tríceps no suporte. Desça até a extensão completa. Suba sem usar impulso.</div>
+      <div class="tip">✅ Extensão total para alongar o bíceps</div>
+    </div>
+  </div>
+
+  <div class="card" id="card-b5">
+    <div class="anim-box" data-anim="curl"><span class="anim-label">Rosca 45°</span></div>
+    <div class="card-top">
+      <div class="card-left">
+        <div class="ex-name">Rosca 45° Banco Inclinado</div>
+        <div class="ex-name-pt">Incline Dumbbell Curl</div>
+        <div class="badges">
+          <span class="badge badge-muscle">Bíceps (alongamento)</span>
+          <span class="badge badge-diff-easy">⬥ Fácil</span>
+        </div>
+      </div>
+      <button class="check-btn" onclick="toggleDone('b5')">✓</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">3</div><div class="stat-lbl">Séries</div></div>
+      <div class="stat"><div class="stat-val">12</div><div class="stat-lbl">Reps</div></div>
+      <div class="stat"><div class="stat-val">60s</div><div class="stat-lbl">Descanso</div></div>
+    </div>
+    <div class="intensity-row">
+      <span class="intensity-label">Intensidade</span>
+      <div class="intensity-bar"><div class="intensity-fill" style="width:42%;background:var(--green)"></div></div>
+    </div>
+    <div class="weight-row">
+      <label>💪 Carga (cada halter)</label>
+      <input class="weight-input" type="number" id="w-b5" placeholder="0" oninput="saveWeight('b5',this.value)" min="0" step="2">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleDetails('det-b5',this)"><span class="toggle-icon">▾</span> Ver execução</button>
+    <div class="details" id="det-b5">
+      <div class="detail-text">Banco a 45°. Braços pendurados naturalmente. Rosca sem balançar o tronco.</div>
+      <div class="tip">✅ Braço pendurado maximiza o alongamento</div>
+      <div class="error-tip">⚠ Não balance o tronco para pegar impulso</div>
+    </div>
+  </div>
+
+  <div class="card" id="card-b6">
+    <div class="anim-box" data-anim="curl"><span class="anim-label">Rosca Martelo</span></div>
+    <div class="card-top">
+      <div class="card-left">
+        <div class="ex-name">Rosca Martelo</div>
+        <div class="ex-name-pt">Hammer Curl</div>
+        <div class="badges">
+          <span class="badge badge-muscle">Braquial</span>
+          <span class="badge badge-muscle">Braquiorradial</span>
+          <span class="badge badge-diff-easy">⬥ Fácil</span>
+        </div>
+      </div>
+      <button class="check-btn" onclick="toggleDone('b6')">✓</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">3</div><div class="stat-lbl">Séries</div></div>
+      <div class="stat"><div class="stat-val">12–15</div><div class="stat-lbl">Reps</div></div>
+      <div class="stat"><div class="stat-val">60s</div><div class="stat-lbl">Descanso</div></div>
+    </div>
+    <div class="intensity-row">
+      <span class="intensity-label">Intensidade</span>
+      <div class="intensity-bar"><div class="intensity-fill" style="width:40%;background:var(--green)"></div></div>
+    </div>
+    <div class="weight-row">
+      <label>💪 Carga (cada halter)</label>
+      <input class="weight-input" type="number" id="w-b6" placeholder="0" oninput="saveWeight('b6',this.value)" min="0" step="2">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleDetails('det-b6',this)"><span class="toggle-icon">▾</span> Ver execução</button>
+    <div class="details" id="det-b6">
+      <div class="detail-text">Pegada neutra (polegar para cima) durante todo o movimento.</div>
+      <div class="tip">✅ Pegada neutra do início ao fim</div>
+    </div>
+  </div>
+
+  <div class="notes-area" style="margin-top:20px">
+    <label>Observações do treino B</label>
+    <textarea id="notes-b" placeholder="Anote como foi o treino..." oninput="saveNote('b',this.value)"></textarea>
+  </div>
+</div>
+
+<!-- ===== TREINO C ===== -->
+<div class="content" id="tab-c">
+  <div class="section-label">— QUADRÍCEPS</div>
+
+  <div class="card" id="card-c1">
+    <div class="anim-box" data-anim="squat"><span class="anim-label">Agachamento</span></div>
+    <div class="card-top">
+      <div class="card-left">
+        <div class="ex-name">Agachamento Livre</div>
+        <div class="ex-name-pt">Back Squat</div>
+        <div class="badges">
+          <span class="badge badge-muscle">Quadríceps</span>
+          <span class="badge badge-muscle">Glúteo</span>
+          <span class="badge badge-muscle">Posterior</span>
+          <span class="badge badge-diff-hard">⬥ Difícil</span>
+        </div>
+      </div>
+      <button class="check-btn" onclick="toggleDone('c1')">✓</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">4</div><div class="stat-lbl">Séries</div></div>
+      <div class="stat"><div class="stat-val">8–10</div><div class="stat-lbl">Reps</div></div>
+      <div class="stat"><div class="stat-val">120s</div><div class="stat-lbl">Descanso</div></div>
+    </div>
+    <div class="intensity-row">
+      <span class="intensity-label">Intensidade</span>
+      <div class="intensity-bar"><div class="intensity-fill" style="width:88%;background:var(--red)"></div></div>
+    </div>
+    <div class="weight-row">
+      <label>💪 Carga na barra</label>
+      <input class="weight-input" type="number" id="w-c1" placeholder="0" oninput="saveWeight('c1',this.value)" min="0" step="5">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleDetails('det-c1',this)"><span class="toggle-icon">▾</span> Ver execução e dicas</button>
+    <div class="details" id="det-c1">
+      <div class="detail-text">Pés na largura dos ombros. Lombar neutra. Inspire descendo, expire subindo. Joelhos seguindo os pés.</div>
+      <div class="tip">✅ Lombar neutra sempre · Joelhos rastreando os pés</div>
+      <div class="error-tip">⚠ Não deixe os joelhos caírem para dentro</div>
+    </div>
+  </div>
+
+  <div class="card" id="card-c2">
+    <div class="anim-box" data-anim="leg-press"><span class="anim-label">Leg Press</span></div>
+    <div class="card-top">
+      <div class="card-left">
+        <div class="ex-name">Leg Press</div>
+        <div class="ex-name-pt">Leg Press Machine</div>
+        <div class="badges">
+          <span class="badge badge-muscle">Quadríceps</span>
+          <span class="badge badge-muscle">Glúteo</span>
+          <span class="badge badge-diff-easy">⬥ Fácil–Médio</span>
+        </div>
+      </div>
+      <button class="check-btn" onclick="toggleDone('c2')">✓</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">3</div><div class="stat-lbl">Séries</div></div>
+      <div class="stat"><div class="stat-val">12–15</div><div class="stat-lbl">Reps</div></div>
+      <div class="stat"><div class="stat-val">90s</div><div class="stat-lbl">Descanso</div></div>
+    </div>
+    <div class="intensity-row">
+      <span class="intensity-label">Intensidade</span>
+      <div class="intensity-bar"><div class="intensity-fill" style="width:62%;background:var(--yellow)"></div></div>
+    </div>
+    <div class="weight-row">
+      <label>💪 Carga total</label>
+      <input class="weight-input" type="number" id="w-c2" placeholder="0" oninput="saveWeight('c2',this.value)" min="0" step="10">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleDetails('det-c2',this)"><span class="toggle-icon">▾</span> Ver execução</button>
+    <div class="details" id="det-c2">
+      <div class="detail-text">Pés na largura dos ombros. Desça até 90° no joelho. Não trave o joelho no topo.</div>
+      <div class="tip">✅ 90° de amplitude · Não trave o joelho</div>
+    </div>
+  </div>
+
+  <div class="card" id="card-c3">
+    <div class="anim-box" data-anim="leg-extension"><span class="anim-label">Cadeira Extensora</span></div>
+    <div class="card-top">
+      <div class="card-left">
+        <div class="ex-name">Cadeira Extensora</div>
+        <div class="ex-name-pt">Leg Extension Machine</div>
+        <div class="badges">
+          <span class="badge badge-muscle">Quadríceps (VMO)</span>
+          <span class="badge badge-diff-easy">⬥ Fácil</span>
+        </div>
+      </div>
+      <button class="check-btn" onclick="toggleDone('c3')">✓</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">3</div><div class="stat-lbl">Séries</div></div>
+      <div class="stat"><div class="stat-val">15</div><div class="stat-lbl">Reps</div></div>
+      <div class="stat"><div class="stat-val">60s</div><div class="stat-lbl">Descanso</div></div>
+    </div>
+    <div class="intensity-row">
+      <span class="intensity-label">Intensidade</span>
+      <div class="intensity-bar"><div class="intensity-fill" style="width:40%;background:var(--green)"></div></div>
+    </div>
+    <div class="weight-row">
+      <label>💪 Carga atual</label>
+      <input class="weight-input" type="number" id="w-c3" placeholder="0" oninput="saveWeight('c3',this.value)" min="0" step="5">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleDetails('det-c3',this)"><span class="toggle-icon">▾</span> Ver execução</button>
+    <div class="details" id="det-c3">
+      <div class="detail-text">Pause 1s na contração máxima. Retorne controlado.</div>
+      <div class="tip">✅ Pause no topo para ativar VMO</div>
+      <div class="error-tip">⚠ Não hiperestenda o joelho</div>
+    </div>
+  </div>
+
+  <div class="section-label">— POSTERIOR</div>
+
+  <div class="card" id="card-c4">
+    <div class="anim-box" data-anim="lying-leg-curl"><span class="anim-label">Mesa Flexora</span></div>
+    <div class="card-top">
+      <div class="card-left">
+        <div class="ex-name">Mesa Flexora</div>
+        <div class="ex-name-pt">Lying Leg Curl</div>
+        <div class="badges">
+          <span class="badge badge-muscle">Posterior de Coxa</span>
+          <span class="badge badge-diff-easy">⬥ Fácil</span>
+        </div>
+      </div>
+      <button class="check-btn" onclick="toggleDone('c4')">✓</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">3</div><div class="stat-lbl">Séries</div></div>
+      <div class="stat"><div class="stat-val">12</div><div class="stat-lbl">Reps</div></div>
+      <div class="stat"><div class="stat-val">75s</div><div class="stat-lbl">Descanso</div></div>
+    </div>
+    <div class="intensity-row">
+      <span class="intensity-label">Intensidade</span>
+      <div class="intensity-bar"><div class="intensity-fill" style="width:42%;background:var(--green)"></div></div>
+    </div>
+    <div class="weight-row">
+      <label>💪 Carga atual</label>
+      <input class="weight-input" type="number" id="w-c4" placeholder="0" oninput="saveWeight('c4',this.value)" min="0" step="5">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleDetails('det-c4',this)"><span class="toggle-icon">▾</span> Ver execução</button>
+    <div class="details" id="det-c4">
+      <div class="detail-text">Excêntrica controlada (3s na descida). Não use impulso na subida.</div>
+      <div class="tip">✅ Eccêntrico lento — é onde acontece a hipertrofia</div>
+    </div>
+  </div>
+
+  <div class="card" id="card-c5">
+    <div class="anim-box" data-anim="seated-leg-curl"><span class="anim-label">Cadeira Flexora</span></div>
+    <div class="card-top">
+      <div class="card-left">
+        <div class="ex-name">Cadeira Flexora</div>
+        <div class="ex-name-pt">Seated Leg Curl</div>
+        <div class="badges">
+          <span class="badge badge-muscle">Posterior de Coxa</span>
+          <span class="badge badge-diff-easy">⬥ Fácil</span>
+        </div>
+      </div>
+      <button class="check-btn" onclick="toggleDone('c5')">✓</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">3</div><div class="stat-lbl">Séries</div></div>
+      <div class="stat"><div class="stat-val">12–15</div><div class="stat-lbl">Reps</div></div>
+      <div class="stat"><div class="stat-val">60s</div><div class="stat-lbl">Descanso</div></div>
+    </div>
+    <div class="intensity-row">
+      <span class="intensity-label">Intensidade</span>
+      <div class="intensity-bar"><div class="intensity-fill" style="width:38%;background:var(--green)"></div></div>
+    </div>
+    <div class="weight-row">
+      <label>💪 Carga atual</label>
+      <input class="weight-input" type="number" id="w-c5" placeholder="0" oninput="saveWeight('c5',this.value)" min="0" step="5">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleDetails('det-c5',this)"><span class="toggle-icon">▾</span> Ver execução</button>
+    <div class="details" id="det-c5">
+      <div class="detail-text">Ângulo sentado alonga mais o posterior. Controle total do movimento.</div>
+      <div class="tip">✅ Ótimo par com mesa flexora — ângulo diferente</div>
+    </div>
+  </div>
+
+  <div class="section-label">— PANTURRILHA</div>
+
+  <div class="card" id="card-c6">
+    <div class="anim-box" data-anim="calf-raise"><span class="anim-label">Panturrilha</span></div>
+    <div class="card-top">
+      <div class="card-left">
+        <div class="ex-name">Panturrilha em Pé</div>
+        <div class="ex-name-pt">Standing Calf Raise</div>
+        <div class="badges">
+          <span class="badge badge-muscle">Gastrocnêmio</span>
+          <span class="badge badge-muscle">Sóleo</span>
+          <span class="badge badge-diff-easy">⬥ Fácil</span>
+        </div>
+      </div>
+      <button class="check-btn" onclick="toggleDone('c6')">✓</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">4</div><div class="stat-lbl">Séries</div></div>
+      <div class="stat"><div class="stat-val">15–20</div><div class="stat-lbl">Reps</div></div>
+      <div class="stat"><div class="stat-val">45s</div><div class="stat-lbl">Descanso</div></div>
+    </div>
+    <div class="intensity-row">
+      <span class="intensity-label">Intensidade</span>
+      <div class="intensity-bar"><div class="intensity-fill" style="width:35%;background:var(--green)"></div></div>
+    </div>
+    <div class="weight-row">
+      <label>💪 Carga atual</label>
+      <input class="weight-input" type="number" id="w-c6" placeholder="0" oninput="saveWeight('c6',this.value)" min="0" step="5">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleDetails('det-c6',this)"><span class="toggle-icon">▾</span> Ver execução</button>
+    <div class="details" id="det-c6">
+      <div class="detail-text">Amplitude total — pause 1–2s no alongamento (calcanhar abaixo). Suba e contraia no topo.</div>
+      <div class="tip">✅ Pausa no alongamento é o segredo para crescer panturrilha</div>
+    </div>
+  </div>
+
+  <div class="notes-area" style="margin-top:20px">
+    <label>Observações do treino C</label>
+    <textarea id="notes-c" placeholder="Anote como foi o treino..." oninput="saveNote('c',this.value)"></textarea>
+  </div>
+</div>
+
+<!-- ===== TREINO D ===== -->
+<div class="content" id="tab-d">
+  <div class="section-label">— OMBRO</div>
+
+  <div class="card" id="card-d1">
+    <div class="anim-box" data-anim="overhead-press"><span class="anim-label">Desenvolvimento</span></div>
+    <div class="card-top">
+      <div class="card-left">
+        <div class="ex-name">Desenvolvimento</div>
+        <div class="ex-name-pt">Overhead Press</div>
+        <div class="badges">
+          <span class="badge badge-muscle">Deltóide (3 cabeças)</span>
+          <span class="badge badge-muscle">Trapézio</span>
+          <span class="badge badge-diff-hard">⬥ Médio–Difícil</span>
+        </div>
+      </div>
+      <button class="check-btn" onclick="toggleDone('d1')">✓</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">4</div><div class="stat-lbl">Séries</div></div>
+      <div class="stat"><div class="stat-val">8–10</div><div class="stat-lbl">Reps</div></div>
+      <div class="stat"><div class="stat-val">90s</div><div class="stat-lbl">Descanso</div></div>
+    </div>
+    <div class="intensity-row">
+      <span class="intensity-label">Intensidade</span>
+      <div class="intensity-bar"><div class="intensity-fill" style="width:78%;background:var(--yellow)"></div></div>
+    </div>
+    <div class="weight-row">
+      <label>💪 Carga na barra / halteres</label>
+      <input class="weight-input" type="number" id="w-d1" placeholder="0" oninput="saveWeight('d1',this.value)" min="0" step="2.5">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleDetails('det-d1',this)"><span class="toggle-icon">▾</span> Ver execução e dicas</button>
+    <div class="details" id="det-d1">
+      <div class="detail-text">Core contraído. Cotovelos a 45° do corpo. Empurre sem travar o cotovelo. Não arqueie a lombar.</div>
+      <div class="tip">✅ Core estabilizado · Não trave os cotovelos</div>
+      <div class="error-tip">⚠ Não arqueie a lombar para compensar carga</div>
+    </div>
+  </div>
+
+  <div class="card" id="card-d2">
+    <div class="anim-box" data-anim="lateral-raise"><span class="anim-label">Elevação Lateral</span></div>
+    <div class="card-top">
+      <div class="card-left">
+        <div class="ex-name">Elevação Lateral</div>
+        <div class="ex-name-pt">Lateral Raise</div>
+        <div class="badges">
+          <span class="badge badge-muscle">Deltóide Medial</span>
+          <span class="badge badge-diff-easy">⬥ Fácil</span>
+        </div>
+      </div>
+      <button class="check-btn" onclick="toggleDone('d2')">✓</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">3</div><div class="stat-lbl">Séries</div></div>
+      <div class="stat"><div class="stat-val">15</div><div class="stat-lbl">Reps</div></div>
+      <div class="stat"><div class="stat-val">60s</div><div class="stat-lbl">Descanso</div></div>
+    </div>
+    <div class="intensity-row">
+      <span class="intensity-label">Intensidade</span>
+      <div class="intensity-bar"><div class="intensity-fill" style="width:42%;background:var(--green)"></div></div>
+    </div>
+    <div class="weight-row">
+      <label>💪 Carga (cada halter)</label>
+      <input class="weight-input" type="number" id="w-d2" placeholder="0" oninput="saveWeight('d2',this.value)" min="0" step="1">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleDetails('det-d2',this)"><span class="toggle-icon">▾</span> Ver execução</button>
+    <div class="details" id="det-d2">
+      <div class="detail-text">Suba os halteres até a altura do ombro. Cotovelo levemente dobrado. Não encolha o pescoço.</div>
+      <div class="tip">✅ Comece leve · Não encolha o trapézio</div>
+      <div class="error-tip">⚠ Não use impulso do corpo</div>
+    </div>
+  </div>
+
+  <div class="card" id="card-d3">
+    <div class="anim-box" data-anim="front-raise"><span class="anim-label">Elevação Frontal</span></div>
+    <div class="card-top">
+      <div class="card-left">
+        <div class="ex-name">Elevação Frontal</div>
+        <div class="ex-name-pt">Front Raise</div>
+        <div class="badges">
+          <span class="badge badge-muscle">Deltóide Anterior</span>
+          <span class="badge badge-diff-easy">⬥ Fácil</span>
+        </div>
+      </div>
+      <button class="check-btn" onclick="toggleDone('d3')">✓</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">3</div><div class="stat-lbl">Séries</div></div>
+      <div class="stat"><div class="stat-val">12</div><div class="stat-lbl">Reps</div></div>
+      <div class="stat"><div class="stat-val">60s</div><div class="stat-lbl">Descanso</div></div>
+    </div>
+    <div class="intensity-row">
+      <span class="intensity-label">Intensidade</span>
+      <div class="intensity-bar"><div class="intensity-fill" style="width:38%;background:var(--green)"></div></div>
+    </div>
+    <div class="weight-row">
+      <label>💪 Carga (cada halter)</label>
+      <input class="weight-input" type="number" id="w-d3" placeholder="0" oninput="saveWeight('d3',this.value)" min="0" step="1">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleDetails('det-d3',this)"><span class="toggle-icon">▾</span> Ver execução</button>
+    <div class="details" id="det-d3">
+      <div class="detail-text">Alterne os braços ou use cabo. Suba até a altura do ombro. Controle a descida.</div>
+      <div class="tip">✅ Cabo dá tensão mais constante que o halter</div>
+    </div>
+  </div>
+
+  <div class="section-label">— TRAPÉZIO</div>
+
+  <div class="card" id="card-d4">
+    <div class="anim-box" data-anim="shrug"><span class="anim-label">Encolhimento</span></div>
+    <div class="card-top">
+      <div class="card-left">
+        <div class="ex-name">Encolhimento</div>
+        <div class="ex-name-pt">Barbell Shrug</div>
+        <div class="badges">
+          <span class="badge badge-muscle">Trapézio Superior</span>
+          <span class="badge badge-diff-easy">⬥ Fácil</span>
+        </div>
+      </div>
+      <button class="check-btn" onclick="toggleDone('d4')">✓</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">4</div><div class="stat-lbl">Séries</div></div>
+      <div class="stat"><div class="stat-val">12–15</div><div class="stat-lbl">Reps</div></div>
+      <div class="stat"><div class="stat-val">60s</div><div class="stat-lbl">Descanso</div></div>
+    </div>
+    <div class="intensity-row">
+      <span class="intensity-label">Intensidade</span>
+      <div class="intensity-bar"><div class="intensity-fill" style="width:45%;background:var(--green)"></div></div>
+    </div>
+    <div class="weight-row">
+      <label>💪 Carga na barra</label>
+      <input class="weight-input" type="number" id="w-d4" placeholder="0" oninput="saveWeight('d4',this.value)" min="0" step="5">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleDetails('det-d4',this)"><span class="toggle-icon">▾</span> Ver execução</button>
+    <div class="details" id="det-d4">
+      <div class="detail-text">Movimento vertical puro — sem girar os ombros. Pause 1s no topo.</div>
+      <div class="tip">✅ Pause na contração · Movimento vertical, sem círculos</div>
+    </div>
+  </div>
+
+  <div class="card" id="card-d5">
+    <div class="anim-box" data-anim="upright-row"><span class="anim-label">Remada Alta</span></div>
+    <div class="card-top">
+      <div class="card-left">
+        <div class="ex-name">Remada Alta</div>
+        <div class="ex-name-pt">Upright Row</div>
+        <div class="badges">
+          <span class="badge badge-muscle">Trapézio</span>
+          <span class="badge badge-muscle">Deltóide Lateral</span>
+          <span class="badge badge-diff-medium">⬥ Médio</span>
+        </div>
+      </div>
+      <button class="check-btn" onclick="toggleDone('d5')">✓</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val">3</div><div class="stat-lbl">Séries</div></div>
+      <div class="stat"><div class="stat-val">12</div><div class="stat-lbl">Reps</div></div>
+      <div class="stat"><div class="stat-val">75s</div><div class="stat-lbl">Descanso</div></div>
+    </div>
+    <div class="intensity-row">
+      <span class="intensity-label">Intensidade</span>
+      <div class="intensity-bar"><div class="intensity-fill" style="width:55%;background:var(--yellow)"></div></div>
+    </div>
+    <div class="weight-row">
+      <label>💪 Carga na barra</label>
+      <input class="weight-input" type="number" id="w-d5" placeholder="0" oninput="saveWeight('d5',this.value)" min="0" step="2.5">
+      <span class="weight-unit">kg</span>
+    </div>
+    <button class="toggle-btn" onclick="toggleDetails('det-d5',this)"><span class="toggle-icon">▾</span> Ver execução</button>
+    <div class="details" id="det-d5">
+      <div class="detail-text">Cotovelos sempre acima dos pulsos. Puxe a barra próxima ao corpo até o queixo.</div>
+      <div class="tip">✅ Cotovelos acima dos pulsos · Barra próxima ao corpo</div>
+      <div class="error-tip">⚠ Pegada larga reduz estresse no pulso</div>
+    </div>
+  </div>
+
+  <div class="notes-area" style="margin-top:20px">
+    <label>Observações do treino D</label>
+    <textarea id="notes-d" placeholder="Anote como foi o treino..." oninput="saveNote('d',this.value)"></textarea>
+  </div>
+</div>
+
+<!-- WEEKLY PANEL -->
+<div style="max-width:900px;margin:0 auto;padding:0 24px 60px">
+  <div class="weekly">
+    <h2>CONTROLE SEMANAL</h2>
+    <div class="week-grid">
+      <div class="week-day" id="week-a" onclick="toggleWeekDay('a')">
+        <div class="week-day-letter">A</div>
+        <div class="week-day-label">Peito & Tríceps</div>
+        <div class="week-day-status" id="ws-a">○</div>
+      </div>
+      <div class="week-day" id="week-b" onclick="toggleWeekDay('b')">
+        <div class="week-day-letter">B</div>
+        <div class="week-day-label">Costas & Bíceps</div>
+        <div class="week-day-status" id="ws-b">○</div>
+      </div>
+      <div class="week-day" id="week-c" onclick="toggleWeekDay('c')">
+        <div class="week-day-letter">C</div>
+        <div class="week-day-label">Pernas</div>
+        <div class="week-day-status" id="ws-c">○</div>
+      </div>
+      <div class="week-day" id="week-d" onclick="toggleWeekDay('d')">
+        <div class="week-day-letter">D</div>
+        <div class="week-day-label">Ombro & Trapézio</div>
+        <div class="week-day-status" id="ws-d">○</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// SVG ANIMATIONS
+const ANIMS = {
+'bench': `<svg viewBox="0 0 90 65" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="6" y="36" width="64" height="5" rx="2" fill="#1c1c1c" stroke="#2a2a2a" stroke-width="1"/>
+<circle cx="78" cy="22" r="6" fill="#555"/>
+<line x1="75" y1="27" x2="72" y2="36" stroke="#555" stroke-width="1.5"/>
+<line x1="14" y1="36" x2="72" y2="36" stroke="#555" stroke-width="2"/>
+<line x1="14" y1="36" x2="7" y2="49" stroke="#555" stroke-width="1.5"/>
+<line x1="14" y1="36" x2="21" y2="49" stroke="#555" stroke-width="1.5"/>
+<g><animateTransform attributeName="transform" type="translate" values="0,0;0,-13;0,0" dur="2s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<line x1="28" y1="36" x2="28" y2="22" stroke="#e63946" stroke-width="1.5"/>
+<line x1="48" y1="36" x2="48" y2="22" stroke="#e63946" stroke-width="1.5"/>
+<rect x="16" y="18" width="36" height="4" rx="2" fill="#e63946" opacity="0.9"/>
+<rect x="12" y="17" width="4" height="6" rx="1" fill="#c0392b"/>
+<rect x="52" y="17" width="4" height="6" rx="1" fill="#c0392b"/>
+</g></svg>`,
+
+'incline': `<svg viewBox="0 0 90 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="5" y="52" width="58" height="5" rx="2" transform="rotate(-25 5 52)" fill="#1c1c1c" stroke="#2a2a2a" stroke-width="1"/>
+<circle cx="76" cy="18" r="6" fill="#555"/>
+<line x1="72" y1="23" x2="67" y2="32" stroke="#555" stroke-width="1.5"/>
+<line x1="18" y1="55" x2="67" y2="32" stroke="#555" stroke-width="2"/>
+<line x1="18" y1="55" x2="10" y2="65" stroke="#555" stroke-width="1.5"/>
+<g><animateTransform attributeName="transform" type="translate" values="0,0;-9,-13;0,0" dur="2s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<line x1="36" y1="44" x2="27" y2="31" stroke="#e63946" stroke-width="1.5"/>
+<line x1="52" y1="37" x2="43" y2="24" stroke="#e63946" stroke-width="1.5"/>
+<rect x="22" y="24" width="28" height="4" rx="2" transform="rotate(-25 22 24)" fill="#e63946" opacity="0.9"/>
+</g></svg>`,
+
+'chest-fly': `<svg viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="45" cy="16" r="6" fill="#555"/>
+<line x1="45" y1="22" x2="45" y2="52" stroke="#555" stroke-width="2"/>
+<line x1="45" y1="52" x2="32" y2="68" stroke="#555" stroke-width="1.5"/>
+<line x1="45" y1="52" x2="58" y2="68" stroke="#555" stroke-width="1.5"/>
+<line x1="32" y1="68" x2="30" y2="82" stroke="#555" stroke-width="1.5"/>
+<line x1="58" y1="68" x2="60" y2="82" stroke="#555" stroke-width="1.5"/>
+<g><animateTransform attributeName="transform" type="rotate" values="0 45 34;-48 45 34;0 45 34" dur="2s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<line x1="45" y1="34" x2="16" y2="42" stroke="#e63946" stroke-width="1.5"/>
+<circle cx="16" cy="42" r="3.5" fill="none" stroke="#e63946" stroke-width="1.5"/>
+</g>
+<g><animateTransform attributeName="transform" type="rotate" values="0 45 34;48 45 34;0 45 34" dur="2s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<line x1="45" y1="34" x2="74" y2="42" stroke="#e63946" stroke-width="1.5"/>
+<circle cx="74" cy="42" r="3.5" fill="none" stroke="#e63946" stroke-width="1.5"/>
+</g></svg>`,
+
+'tricep-down': `<svg viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="34" y="3" width="22" height="4" rx="2" fill="#333"/>
+<line x1="45" y1="7" x2="45" y2="22" stroke="#444" stroke-width="1"/>
+<circle cx="45" cy="20" r="6" fill="#555"/>
+<line x1="45" y1="26" x2="45" y2="56" stroke="#555" stroke-width="2"/>
+<line x1="45" y1="56" x2="34" y2="72" stroke="#555" stroke-width="1.5"/>
+<line x1="45" y1="56" x2="56" y2="72" stroke="#555" stroke-width="1.5"/>
+<line x1="34" y1="72" x2="32" y2="84" stroke="#555" stroke-width="1.5"/>
+<line x1="56" y1="72" x2="58" y2="84" stroke="#555" stroke-width="1.5"/>
+<line x1="45" y1="34" x2="34" y2="46" stroke="#555" stroke-width="1.5"/>
+<line x1="45" y1="34" x2="56" y2="46" stroke="#555" stroke-width="1.5"/>
+<g><animateTransform attributeName="transform" type="translate" values="0,-14;0,0;0,-14" dur="1.8s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<line x1="34" y1="60" x2="32" y2="48" stroke="#e63946" stroke-width="1.5"/>
+<line x1="56" y1="60" x2="58" y2="48" stroke="#e63946" stroke-width="1.5"/>
+<rect x="28" y="44" width="34" height="4" rx="2" fill="#e63946" opacity="0.85"/>
+</g></svg>`,
+
+'skull-crusher': `<svg viewBox="0 0 90 65" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="6" y="36" width="64" height="5" rx="2" fill="#1c1c1c" stroke="#2a2a2a"/>
+<circle cx="78" cy="22" r="6" fill="#555"/>
+<line x1="75" y1="27" x2="72" y2="36" stroke="#555" stroke-width="1.5"/>
+<line x1="14" y1="36" x2="72" y2="36" stroke="#555" stroke-width="2"/>
+<line x1="14" y1="36" x2="7" y2="49" stroke="#555" stroke-width="1.5"/>
+<line x1="14" y1="36" x2="21" y2="49" stroke="#555" stroke-width="1.5"/>
+<line x1="28" y1="36" x2="28" y2="22" stroke="#555" stroke-width="1.5"/>
+<line x1="48" y1="36" x2="48" y2="22" stroke="#555" stroke-width="1.5"/>
+<g><animateTransform attributeName="transform" type="rotate" values="0 38 22;-55 38 22;0 38 22" dur="2s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<line x1="28" y1="22" x2="28" y2="10" stroke="#e63946" stroke-width="1.5"/>
+<line x1="48" y1="22" x2="48" y2="10" stroke="#e63946" stroke-width="1.5"/>
+<rect x="20" y="6" width="36" height="4" rx="2" fill="#e63946" opacity="0.9"/>
+</g></svg>`,
+
+'pulldown': `<svg viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="8" y="4" width="74" height="4" rx="2" fill="#2a2a2a"/>
+<line x1="45" y1="8" x2="45" y2="20" stroke="#333" stroke-width="1"/>
+<rect x="28" y="65" width="34" height="5" rx="2" fill="#1c1c1c" stroke="#2a2a2a"/>
+<circle cx="45" cy="34" r="6" fill="#555"/>
+<line x1="45" y1="40" x2="45" y2="65" stroke="#555" stroke-width="2"/>
+<line x1="45" y1="65" x2="30" y2="76" stroke="#555" stroke-width="1.5"/>
+<line x1="45" y1="65" x2="60" y2="76" stroke="#555" stroke-width="1.5"/>
+<line x1="30" y1="76" x2="27" y2="86" stroke="#555" stroke-width="1.5"/>
+<line x1="60" y1="76" x2="63" y2="86" stroke="#555" stroke-width="1.5"/>
+<g><animateTransform attributeName="transform" type="translate" values="0,0;0,20;0,0" dur="2s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<rect x="20" y="16" width="50" height="4" rx="2" fill="#e63946" opacity="0.9"/>
+<line x1="24" y1="20" x2="32" y2="40" stroke="#e63946" stroke-width="1.5"/>
+<line x1="66" y1="20" x2="58" y2="40" stroke="#e63946" stroke-width="1.5"/>
+</g></svg>`,
+
+'cable-row': `<svg viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="2" y="30" width="6" height="28" rx="2" fill="#2a2a2a"/>
+<circle cx="5" cy="50" r="3" fill="#333"/>
+<circle cx="55" cy="28" r="6" fill="#555"/>
+<line x1="52" y1="33" x2="44" y2="55" stroke="#555" stroke-width="2"/>
+<line x1="44" y1="55" x2="30" y2="66" stroke="#555" stroke-width="1.5"/>
+<line x1="44" y1="55" x2="56" y2="66" stroke="#555" stroke-width="1.5"/>
+<line x1="30" y1="66" x2="27" y2="80" stroke="#555" stroke-width="1.5"/>
+<line x1="56" y1="66" x2="60" y2="80" stroke="#555" stroke-width="1.5"/>
+<rect x="28" y="66" width="30" height="4" rx="2" fill="#1c1c1c"/>
+<g><animateTransform attributeName="transform" type="translate" values="0,0;22,0;0,0" dur="2s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<line x1="5" y1="50" x2="38" y2="46" stroke="#e63946" stroke-width="1.5"/>
+<circle cx="38" cy="46" r="3" fill="#e63946" opacity="0.85"/>
+</g></svg>`,
+
+'preacher-curl': `<svg viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="18" y="42" width="42" height="6" rx="3" transform="rotate(-18 18 42)" fill="#1c1c1c" stroke="#2a2a2a"/>
+<circle cx="64" cy="20" r="6" fill="#555"/>
+<line x1="61" y1="25" x2="54" y2="36" stroke="#555" stroke-width="1.5"/>
+<line x1="54" y1="36" x2="50" y2="60" stroke="#555" stroke-width="2"/>
+<line x1="50" y1="60" x2="38" y2="74" stroke="#555" stroke-width="1.5"/>
+<line x1="50" y1="60" x2="58" y2="74" stroke="#555" stroke-width="1.5"/>
+<line x1="54" y1="36" x2="36" y2="48" stroke="#555" stroke-width="1.5"/>
+<g><animateTransform attributeName="transform" type="rotate" values="0 36 48;-65 36 48;0 36 48" dur="2s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<line x1="36" y1="48" x2="26" y2="64" stroke="#e63946" stroke-width="1.5"/>
+<circle cx="26" cy="64" r="5" fill="none" stroke="#e63946" stroke-width="1.5"/>
+</g></svg>`,
+
+'curl': `<svg viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="45" cy="10" r="6" fill="#555"/>
+<line x1="45" y1="16" x2="45" y2="50" stroke="#555" stroke-width="2"/>
+<line x1="45" y1="50" x2="33" y2="68" stroke="#555" stroke-width="1.5"/>
+<line x1="45" y1="50" x2="57" y2="68" stroke="#555" stroke-width="1.5"/>
+<line x1="33" y1="68" x2="31" y2="82" stroke="#555" stroke-width="1.5"/>
+<line x1="57" y1="68" x2="59" y2="82" stroke="#555" stroke-width="1.5"/>
+<line x1="45" y1="28" x2="60" y2="42" stroke="#555" stroke-width="1.5"/>
+<line x1="45" y1="28" x2="30" y2="42" stroke="#555" stroke-width="1.5"/>
+<g><animateTransform attributeName="transform" type="rotate" values="0 30 42;-75 30 42;0 30 42" dur="2s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<line x1="30" y1="42" x2="22" y2="58" stroke="#e63946" stroke-width="1.5"/>
+<circle cx="22" cy="58" r="4" fill="none" stroke="#e63946" stroke-width="1.5"/>
+</g>
+<g><animateTransform attributeName="transform" type="rotate" values="0 60 42;75 60 42;0 60 42" dur="2s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<line x1="60" y1="42" x2="68" y2="58" stroke="#e63946" stroke-width="1.5"/>
+<circle cx="68" cy="58" r="4" fill="none" stroke="#e63946" stroke-width="1.5"/>
+</g></svg>`,
+
+'squat': `<svg viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g><animateTransform attributeName="transform" type="translate" values="0,0;0,12;0,0" dur="2.2s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<circle cx="45" cy="8" r="6" fill="#555"/>
+<line x1="45" y1="14" x2="45" y2="34" stroke="#555" stroke-width="2"/>
+<rect x="18" y="18" width="54" height="3" rx="1.5" fill="#e63946" opacity="0.8"/>
+<rect x="14" y="17" width="4" height="5" rx="1" fill="#c0392b"/>
+<rect x="72" y="17" width="4" height="5" rx="1" fill="#c0392b"/>
+<line x1="45" y1="34" x2="32" y2="56" stroke="#e63946" stroke-width="1.5"/>
+<line x1="45" y1="34" x2="58" y2="56" stroke="#e63946" stroke-width="1.5"/>
+<line x1="32" y1="56" x2="30" y2="74" stroke="#e63946" stroke-width="1.5"/>
+<line x1="58" y1="56" x2="60" y2="74" stroke="#e63946" stroke-width="1.5"/>
+</g></svg>`,
+
+'leg-press': `<svg viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="2" y="46" width="38" height="30" rx="4" fill="#1c1c1c" stroke="#2a2a2a"/>
+<circle cx="20" cy="36" r="6" fill="#555"/>
+<line x1="20" y1="42" x2="20" y2="64" stroke="#555" stroke-width="2"/>
+<g><animateTransform attributeName="transform" type="translate" values="0,0;18,0;0,0" dur="2s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<rect x="62" y="28" width="7" height="34" rx="2" fill="#e63946" opacity="0.8"/>
+<line x1="20" y1="56" x2="46" y2="46" stroke="#e63946" stroke-width="1.5"/>
+<line x1="20" y1="64" x2="46" y2="62" stroke="#e63946" stroke-width="1.5"/>
+<line x1="46" y1="46" x2="62" y2="36" stroke="#e63946" stroke-width="1.5"/>
+<line x1="46" y1="62" x2="62" y2="58" stroke="#e63946" stroke-width="1.5"/>
+</g></svg>`,
+
+'leg-extension': `<svg viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="14" y="38" width="48" height="6" rx="3" fill="#1c1c1c" stroke="#2a2a2a"/>
+<rect x="56" y="18" width="6" height="26" rx="3" fill="#1c1c1c" stroke="#2a2a2a"/>
+<circle cx="46" cy="20" r="6" fill="#555"/>
+<line x1="46" y1="26" x2="46" y2="44" stroke="#555" stroke-width="2"/>
+<line x1="46" y1="44" x2="24" y2="44" stroke="#555" stroke-width="1.5"/>
+<g><animateTransform attributeName="transform" type="rotate" values="0 24 44;-72 24 44;0 24 44" dur="2s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<line x1="24" y1="44" x2="24" y2="66" stroke="#e63946" stroke-width="1.5"/>
+<rect x="18" y="64" width="12" height="4" rx="2" fill="#e63946" opacity="0.85"/>
+</g></svg>`,
+
+'lying-leg-curl': `<svg viewBox="0 0 90 65" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="6" y="36" width="72" height="5" rx="2" fill="#1c1c1c" stroke="#2a2a2a"/>
+<circle cx="14" cy="22" r="6" fill="#555"/>
+<line x1="17" y1="27" x2="20" y2="36" stroke="#555" stroke-width="1.5"/>
+<line x1="20" y1="36" x2="70" y2="36" stroke="#555" stroke-width="2"/>
+<g><animateTransform attributeName="transform" type="rotate" values="0 64 36;-68 64 36;0 64 36" dur="2s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<line x1="64" y1="36" x2="78" y2="36" stroke="#e63946" stroke-width="2"/>
+<circle cx="78" cy="36" r="4" fill="none" stroke="#e63946" stroke-width="1.5"/>
+</g></svg>`,
+
+'seated-leg-curl': `<svg viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="18" y="40" width="46" height="6" rx="3" fill="#1c1c1c" stroke="#2a2a2a"/>
+<rect x="14" y="48" width="52" height="4" rx="2" fill="#1c1c1c" stroke="#2a2a2a"/>
+<circle cx="50" cy="20" r="6" fill="#555"/>
+<line x1="50" y1="26" x2="50" y2="46" stroke="#555" stroke-width="2"/>
+<line x1="50" y1="46" x2="26" y2="46" stroke="#555" stroke-width="1.5"/>
+<g><animateTransform attributeName="transform" type="rotate" values="0 26 46;55 26 46;0 26 46" dur="2s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<line x1="26" y1="46" x2="26" y2="28" stroke="#e63946" stroke-width="1.5"/>
+<rect x="20" y="24" width="12" height="5" rx="2" fill="#e63946" opacity="0.85"/>
+</g></svg>`,
+
+'calf-raise': `<svg viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="25" y="84" width="40" height="3" rx="1.5" fill="#2a2a2a"/>
+<g><animateTransform attributeName="transform" type="translate" values="0,0;0,-10;0,0" dur="1.8s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<circle cx="45" cy="10" r="6" fill="#555"/>
+<line x1="45" y1="16" x2="45" y2="46" stroke="#555" stroke-width="2"/>
+<line x1="45" y1="30" x2="32" y2="42" stroke="#555" stroke-width="1.5"/>
+<line x1="45" y1="30" x2="58" y2="42" stroke="#555" stroke-width="1.5"/>
+<line x1="32" y1="42" x2="28" y2="54" stroke="#555" stroke-width="1.5"/>
+<line x1="58" y1="42" x2="62" y2="54" stroke="#555" stroke-width="1.5"/>
+<line x1="45" y1="46" x2="36" y2="64" stroke="#555" stroke-width="1.5"/>
+<line x1="45" y1="46" x2="54" y2="64" stroke="#555" stroke-width="1.5"/>
+<line x1="36" y1="64" x2="32" y2="82" stroke="#e63946" stroke-width="1.5"/>
+<line x1="54" y1="64" x2="58" y2="82" stroke="#e63946" stroke-width="1.5"/>
+<line x1="32" y1="82" x2="24" y2="79" stroke="#e63946" stroke-width="1.5"/>
+<line x1="58" y1="82" x2="66" y2="79" stroke="#e63946" stroke-width="1.5"/>
+</g></svg>`,
+
+'overhead-press': `<svg viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="28" y="62" width="34" height="5" rx="2" fill="#1c1c1c" stroke="#2a2a2a"/>
+<circle cx="45" cy="22" r="6" fill="#555"/>
+<line x1="45" y1="28" x2="45" y2="62" stroke="#555" stroke-width="2"/>
+<line x1="45" y1="62" x2="32" y2="74" stroke="#555" stroke-width="1.5"/>
+<line x1="45" y1="62" x2="58" y2="74" stroke="#555" stroke-width="1.5"/>
+<line x1="32" y1="74" x2="30" y2="84" stroke="#555" stroke-width="1.5"/>
+<line x1="58" y1="74" x2="60" y2="84" stroke="#555" stroke-width="1.5"/>
+<line x1="45" y1="36" x2="30" y2="44" stroke="#555" stroke-width="1.5"/>
+<line x1="45" y1="36" x2="60" y2="44" stroke="#555" stroke-width="1.5"/>
+<g><animateTransform attributeName="transform" type="translate" values="0,0;0,-18;0,0" dur="2s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<rect x="20" y="34" width="50" height="4" rx="2" fill="#e63946" opacity="0.9"/>
+<rect x="16" y="33" width="4" height="6" rx="1" fill="#c0392b"/>
+<rect x="70" y="33" width="4" height="6" rx="1" fill="#c0392b"/>
+<line x1="28" y1="38" x2="30" y2="44" stroke="#e63946" stroke-width="1"/>
+<line x1="62" y1="38" x2="60" y2="44" stroke="#e63946" stroke-width="1"/>
+</g></svg>`,
+
+'lateral-raise': `<svg viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="45" cy="10" r="6" fill="#555"/>
+<line x1="45" y1="16" x2="45" y2="50" stroke="#555" stroke-width="2"/>
+<line x1="45" y1="50" x2="33" y2="68" stroke="#555" stroke-width="1.5"/>
+<line x1="45" y1="50" x2="57" y2="68" stroke="#555" stroke-width="1.5"/>
+<line x1="33" y1="68" x2="31" y2="82" stroke="#555" stroke-width="1.5"/>
+<line x1="57" y1="68" x2="59" y2="82" stroke="#555" stroke-width="1.5"/>
+<g><animateTransform attributeName="transform" type="rotate" values="0 45 30;-65 45 30;0 45 30" dur="2s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<line x1="45" y1="30" x2="20" y2="40" stroke="#e63946" stroke-width="1.5"/>
+<circle cx="20" cy="40" r="4" fill="none" stroke="#e63946" stroke-width="1.5"/>
+</g>
+<g><animateTransform attributeName="transform" type="rotate" values="0 45 30;65 45 30;0 45 30" dur="2s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<line x1="45" y1="30" x2="70" y2="40" stroke="#e63946" stroke-width="1.5"/>
+<circle cx="70" cy="40" r="4" fill="none" stroke="#e63946" stroke-width="1.5"/>
+</g></svg>`,
+
+'front-raise': `<svg viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="50" cy="10" r="6" fill="#555"/>
+<line x1="50" y1="16" x2="50" y2="50" stroke="#555" stroke-width="2"/>
+<line x1="50" y1="50" x2="38" y2="68" stroke="#555" stroke-width="1.5"/>
+<line x1="50" y1="50" x2="62" y2="68" stroke="#555" stroke-width="1.5"/>
+<line x1="38" y1="68" x2="36" y2="82" stroke="#555" stroke-width="1.5"/>
+<line x1="62" y1="68" x2="64" y2="82" stroke="#555" stroke-width="1.5"/>
+<line x1="50" y1="30" x2="62" y2="46" stroke="#555" stroke-width="1.5"/>
+<line x1="62" y1="46" x2="67" y2="60" stroke="#555" stroke-width="1.5"/>
+<g><animateTransform attributeName="transform" type="rotate" values="0 50 30;-82 50 30;0 50 30" dur="2.2s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<line x1="50" y1="30" x2="37" y2="46" stroke="#e63946" stroke-width="1.5"/>
+<line x1="37" y1="46" x2="30" y2="60" stroke="#e63946" stroke-width="1.5"/>
+<circle cx="30" cy="60" r="4" fill="none" stroke="#e63946" stroke-width="1.5"/>
+</g></svg>`,
+
+'shrug': `<svg viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+<line x1="45" y1="36" x2="45" y2="56" stroke="#555" stroke-width="2"/>
+<line x1="45" y1="56" x2="34" y2="72" stroke="#555" stroke-width="1.5"/>
+<line x1="45" y1="56" x2="56" y2="72" stroke="#555" stroke-width="1.5"/>
+<line x1="34" y1="72" x2="32" y2="84" stroke="#555" stroke-width="1.5"/>
+<line x1="56" y1="72" x2="58" y2="84" stroke="#555" stroke-width="1.5"/>
+<g><animateTransform attributeName="transform" type="translate" values="0,0;0,-10;0,0" dur="1.8s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<circle cx="45" cy="12" r="6" fill="#555"/>
+<line x1="45" y1="18" x2="45" y2="22" stroke="#555" stroke-width="2"/>
+<line x1="26" y1="26" x2="64" y2="26" stroke="#e63946" stroke-width="2.5"/>
+<line x1="26" y1="26" x2="20" y2="56" stroke="#e63946" stroke-width="1.5"/>
+<line x1="64" y1="26" x2="70" y2="56" stroke="#e63946" stroke-width="1.5"/>
+<rect x="14" y="54" width="62" height="4" rx="2" fill="#e63946" opacity="0.9"/>
+<rect x="10" y="53" width="4" height="6" rx="1" fill="#c0392b"/>
+<rect x="76" y="53" width="4" height="6" rx="1" fill="#c0392b"/>
+</g></svg>`,
+
+'upright-row': `<svg viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="45" cy="10" r="6" fill="#555"/>
+<line x1="45" y1="16" x2="45" y2="50" stroke="#555" stroke-width="2"/>
+<line x1="45" y1="50" x2="33" y2="68" stroke="#555" stroke-width="1.5"/>
+<line x1="45" y1="50" x2="57" y2="68" stroke="#555" stroke-width="1.5"/>
+<line x1="33" y1="68" x2="31" y2="82" stroke="#555" stroke-width="1.5"/>
+<line x1="57" y1="68" x2="59" y2="82" stroke="#555" stroke-width="1.5"/>
+<g><animateTransform attributeName="transform" type="translate" values="0,0;0,-22;0,0" dur="2s" repeatCount="indefinite" keyTimes="0;0.5;1" calcMode="spline" keySplines="0.42 0 0.58 1;0.42 0 0.58 1"/>
+<rect x="27" y="58" width="36" height="4" rx="2" fill="#e63946" opacity="0.9"/>
+<line x1="31" y1="58" x2="27" y2="38" stroke="#e63946" stroke-width="1.5"/>
+<line x1="59" y1="58" x2="63" y2="38" stroke="#e63946" stroke-width="1.5"/>
+</g></svg>`
+};
+
+// INJECT ANIMATIONS
+function injectAnims() {
+  document.querySelectorAll('.anim-box[data-anim]').forEach(box => {
+    const svg = ANIMS[box.dataset.anim];
+    if (svg) {
+      const label = box.querySelector('.anim-label');
+      box.innerHTML = svg;
+      if (label) box.appendChild(label);
+    }
+  });
+}
+
+// TAB SWITCHING
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach((el,i) => {
+    el.classList.toggle('active', ['a','b','c','d'][i] === t);
+  });
+  document.querySelectorAll('.content').forEach(el => {
+    el.classList.toggle('active', el.id === 'tab-'+t);
+  });
+}
+
+// DONE TOGGLE
+function toggleDone(id) {
+  const card = document.getElementById('card-'+id);
+  const done = card.classList.toggle('done');
+  localStorage.setItem('done-'+id, done ? '1' : '');
+}
+
+// DETAILS TOGGLE
+function toggleDetails(id, btn) {
+  const det = document.getElementById(id);
+  const open = det.classList.toggle('open');
+  btn.classList.toggle('open', open);
+}
+
+// WEIGHT
+function saveWeight(id, val) {
+  localStorage.setItem('weight-'+id, val);
+}
+
+// NOTES
+function saveNote(t, val) { localStorage.setItem('note-'+t, val); }
+
+// WEEKLY
+function toggleWeekDay(t) {
+  const el = document.getElementById('week-'+t);
+  const done = el.classList.toggle('done-day');
+  document.getElementById('ws-'+t).textContent = done ? '✅' : '○';
+  localStorage.setItem('week-'+t, done ? '1' : '');
+}
+
+// RESTORE
+window.addEventListener('DOMContentLoaded', () => {
+  injectAnims();
+  const ids = ['a1','a2','a3','a4','a5','b1','b2','b3','b4','b5','b6','c1','c2','c3','c4','c5','c6','d1','d2','d3','d4','d5'];
+  ids.forEach(id => {
+    if (localStorage.getItem('done-'+id)) document.getElementById('card-'+id)?.classList.add('done');
+    const w = localStorage.getItem('weight-'+id);
+    if (w) { const inp = document.getElementById('w-'+id); if (inp) inp.value = w; }
+  });
+  ['a','b','c','d'].forEach(t => {
+    if (localStorage.getItem('week-'+t)) {
+      document.getElementById('week-'+t)?.classList.add('done-day');
+      document.getElementById('ws-'+t).textContent = '✅';
+    }
+    const note = localStorage.getItem('note-'+t);
+    if (note) { const ta = document.getElementById('notes-'+t); if (ta) ta.value = note; }
+  });
+});
+</script>
+</body>
+</html>
