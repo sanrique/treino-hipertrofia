@@ -41,9 +41,12 @@
   .card.done { opacity: 0.45; border-color: var(--green); }
 
   /* ANIMATION BOX */
-  .anim-box { height: 180px; background: #04090f; border-radius: 12px; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; border: 1px solid #0d1e3a; overflow: hidden; position: relative; }
+  .anim-box { height: 180px; background: #030d1a; border-radius: 12px; margin-bottom: 16px; display: flex; align-items: center; justify-content: center; border: 1px solid #0d1e3a; overflow: hidden; position: relative; }
   .anim-box img { display: block; width: 100%; height: 100%; object-fit: contain; }
   .anim-label { position: absolute; bottom: 6px; right: 10px; font-size: 9px; color: #444; letter-spacing: 1px; text-transform: uppercase; font-family: 'Bebas Neue', sans-serif; }
+  .bs { fill: #0a1e3c; stroke: #4a9edd; stroke-width: 1.1; }
+  .m { fill: transparent; }
+  .m.active { fill: #e02010; opacity: 0.85; filter: drop-shadow(0 0 6px #ff3300) drop-shadow(0 0 14px #ff0000); }
 
   .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
   .card-left { flex: 1; }
@@ -108,7 +111,6 @@
     .week-grid { grid-template-columns: repeat(2,1fr); }
   }
 </style>
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js"}}</script>
 </head>
 <body>
 
@@ -1035,134 +1037,113 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-<script type="module">
-import * as THREE from 'three';
-const D = Math.PI/180;
-
-function buildFig(){
-  const bM=()=>new THREE.MeshStandardMaterial({color:0xd8d8d8,roughness:0.55,metalness:0.05});
-  const jM=()=>new THREE.MeshStandardMaterial({color:0xbcbcbc,roughness:0.40,metalness:0.10});
-  const mk=(g,m=bM())=>{const ms=new THREE.Mesh(g,m);ms.castShadow=true;return ms;};
-  const g=()=>new THREE.Group();
-
-  const root=g(), pelvis=g();
-  root.add(pelvis);
-  pelvis.add(mk(new THREE.SphereGeometry(0.155,10,7),jM()));
-
-  const torso=g(); torso.position.y=0.13; pelvis.add(torso);
-  const tM=mk(new THREE.CapsuleGeometry(0.148,0.31,3,10)); tM.position.y=0.215; torso.add(tM);
-
-  const nt=g(); nt.position.y=0.445; torso.add(nt);
-  nt.add(mk(new THREE.CylinderGeometry(0.055,0.065,0.088,7)));
-  const hd=mk(new THREE.SphereGeometry(0.12,10,7)); hd.position.y=0.178; nt.add(hd);
-
-  function mkArm(s){
-    const sh=g(); sh.position.set(s*0.20,0.36,0); torso.add(sh);
-    sh.add(mk(new THREE.SphereGeometry(0.066,8,6),jM()));
-    const ua=mk(new THREE.CapsuleGeometry(0.055,0.195,3,8)); ua.position.y=-0.14; sh.add(ua);
-    const el=g(); el.position.y=-0.265; sh.add(el);
-    el.add(mk(new THREE.SphereGeometry(0.060,8,6),jM()));
-    const fa=mk(new THREE.CapsuleGeometry(0.046,0.175,3,8)); fa.position.y=-0.12; el.add(fa);
-    const hd2=mk(new THREE.SphereGeometry(0.056,8,6)); hd2.position.y=-0.235; el.add(hd2);
-    return {sh,el};
-  }
-
-  function mkLeg(s){
-    const hp=g(); hp.position.set(s*0.098,-0.155,0); pelvis.add(hp);
-    hp.add(mk(new THREE.SphereGeometry(0.088,8,6),jM()));
-    const th=mk(new THREE.CapsuleGeometry(0.084,0.255,3,8)); th.position.y=-0.18; hp.add(th);
-    const kn=g(); kn.position.y=-0.36; hp.add(kn);
-    kn.add(mk(new THREE.SphereGeometry(0.076,8,6),jM()));
-    const sh=mk(new THREE.CapsuleGeometry(0.060,0.23,3,8)); sh.position.y=-0.16; kn.add(sh);
-    const ft=mk(new THREE.BoxGeometry(0.082,0.050,0.155)); ft.position.set(0,-0.325,0.042); kn.add(ft);
-    return {hp,kn};
-  }
-
-  const la=mkArm(-1),ra=mkArm(1),ll=mkLeg(-1),rl=mkLeg(1);
-  root.position.y=0.73;
-  return {root,torso,la,ra,ll,rl};
-}
-
-// Pose: cam[x,y,z], torsoX?, sHpX? (both hips), a:{joint:[rx,ry,rz]}, b:{...}
-const P={
-  bench:           {cam:[0.8,0.15,2.5],a:{la_sh:[60,0,-12],ra_sh:[60,0,12],la_el:[0,0,-85],ra_el:[0,0,-85]},b:{la_sh:[78,0,-5],ra_sh:[78,0,5],la_el:[0,0,-8],ra_el:[0,0,-8]}},
-  incline:         {cam:[0.8,0.18,2.5],a:{la_sh:[65,0,-12],ra_sh:[65,0,12],la_el:[0,0,-85],ra_el:[0,0,-85]},b:{la_sh:[102,0,-5],ra_sh:[102,0,5],la_el:[0,0,-8],ra_el:[0,0,-8]}},
-  'chest-fly':     {cam:[0.8,0.10,2.5],a:{la_sh:[62,-80,-5],ra_sh:[62,80,-5],la_el:[0,0,-22],ra_el:[0,0,-22]},b:{la_sh:[65,0,-5],ra_sh:[65,0,-5],la_el:[0,0,-22],ra_el:[0,0,-22]}},
-  'tricep-down':   {cam:[0.7,0.05,2.4],a:{ra_sh:[0,0,-5],ra_el:[0,0,-90]},b:{ra_sh:[0,0,-5],ra_el:[0,0,-5]}},
-  'skull-crusher': {cam:[0.7,0.10,2.5],a:{la_sh:[88,0,-5],ra_sh:[88,0,5],la_el:[0,0,-95],ra_el:[0,0,-95]},b:{la_sh:[88,0,-5],ra_sh:[88,0,5],la_el:[0,0,-8],ra_el:[0,0,-8]}},
-  pulldown:        {cam:[0.7,0.15,2.6],a:{la_sh:[-20,0,148],ra_sh:[20,0,148],la_el:[0,0,-55],ra_el:[0,0,-55]},b:{la_sh:[-18,0,20],ra_sh:[18,0,20],la_el:[0,0,-82],ra_el:[0,0,-82]}},
-  'cable-row':     {cam:[0.7,0.05,2.5],torsoX:-18,a:{la_sh:[0,0,28],ra_sh:[0,0,28],la_el:[0,0,-12],ra_el:[0,0,-12]},b:{la_sh:[0,0,-8],ra_sh:[0,0,-8],la_el:[0,0,-92],ra_el:[0,0,-92]}},
-  'preacher-curl': {cam:[0.7,0.05,2.4],torsoX:-22,a:{ra_sh:[0,0,48],ra_el:[0,0,-12]},b:{ra_sh:[0,0,48],ra_el:[0,0,-112]}},
-  curl:            {cam:[0.7,0.05,2.4],a:{ra_sh:[0,0,-5],ra_el:[0,0,-5]},b:{ra_sh:[0,0,-5],ra_el:[0,0,-118]}},
-  squat:           {cam:[0.8,-0.05,3.1],torsoX:-14,a:{ll_hp:[-5,0,0],rl_hp:[-5,0,0],ll_kn:[0,0,0],rl_kn:[0,0,0]},b:{ll_hp:[88,0,0],rl_hp:[88,0,0],ll_kn:[-90,0,0],rl_kn:[-90,0,0]}},
-  'leg-press':     {cam:[0.8,0.0,2.8],torsoX:-85,a:{ll_hp:[55,0,0],rl_hp:[55,0,0],ll_kn:[-108,0,0],rl_kn:[-108,0,0]},b:{ll_hp:[8,0,0],rl_hp:[8,0,0],ll_kn:[-8,0,0],rl_kn:[-8,0,0]}},
-  'leg-extension': {cam:[2.8,0.2,0.8],sHpX:-90,a:{ll_kn:[90,0,0],rl_kn:[90,0,0]},b:{ll_kn:[0,0,0],rl_kn:[0,0,0]}},
-  'lying-leg-curl':{cam:[0.8,0.05,2.8],torsoX:-85,a:{ll_kn:[-5,0,0],rl_kn:[-5,0,0]},b:{ll_kn:[-115,0,0],rl_kn:[-115,0,0]}},
-  'seated-leg-curl':{cam:[2.8,0.2,0.8],sHpX:-90,a:{ll_kn:[90,0,0],rl_kn:[90,0,0]},b:{ll_kn:[165,0,0],rl_kn:[165,0,0]}},
-  'calf-raise':    {cam:[0.7,-0.1,2.4],a:{ll_kn:[5,0,0],rl_kn:[5,0,0]},b:{ll_kn:[-5,0,0],rl_kn:[-5,0,0]}},
-  'overhead-press':{cam:[0.7,0.20,2.5],a:{la_sh:[-28,0,-5],ra_sh:[28,0,-5],la_el:[0,0,-88],ra_el:[0,0,-88]},b:{la_sh:[-5,0,158],ra_sh:[5,0,158],la_el:[0,0,-5],ra_el:[0,0,-5]}},
-  'lateral-raise': {cam:[0.7,0.10,2.4],a:{la_sh:[-5,0,-5],ra_sh:[5,0,-5]},b:{la_sh:[-88,0,-5],ra_sh:[88,0,-5]}},
-  'front-raise':   {cam:[0.7,0.10,2.4],a:{ra_sh:[0,0,-5]},b:{ra_sh:[92,0,-5]}},
-  shrug:           {cam:[0.7,0.10,2.4],torsoX:4,a:{la_sh:[-5,0,-5],ra_sh:[5,0,-5]},b:{la_sh:[-12,0,-5],ra_sh:[12,0,-5]}},
-  'upright-row':   {cam:[0.7,0.10,2.5],a:{la_sh:[0,0,-5],ra_sh:[0,0,-5],la_el:[0,0,-5],ra_el:[0,0,-5]},b:{la_sh:[-72,0,58],ra_sh:[72,0,58],la_el:[0,0,-102],ra_el:[0,0,-102]}},
+<script>
+const MM={
+  bench:           {v:'f',m:['chest','front_delt','tricep']},
+  incline:         {v:'f',m:['chest','front_delt']},
+  'chest-fly':     {v:'f',m:['chest']},
+  'tricep-down':   {v:'b',m:['tricep']},
+  'skull-crusher': {v:'b',m:['tricep']},
+  pulldown:        {v:'b',m:['lat','bicep']},
+  'cable-row':     {v:'b',m:['lat','rhomboid']},
+  'preacher-curl': {v:'f',m:['bicep']},
+  curl:            {v:'f',m:['bicep']},
+  squat:           {v:'f',m:['quad','glute']},
+  'leg-press':     {v:'f',m:['quad','glute']},
+  'leg-extension': {v:'f',m:['quad']},
+  'lying-leg-curl':{v:'b',m:['hamstring']},
+  'seated-leg-curl':{v:'b',m:['hamstring']},
+  'calf-raise':    {v:'f',m:['calf']},
+  'overhead-press':{v:'f',m:['delt','tricep']},
+  'lateral-raise': {v:'f',m:['lat_delt']},
+  'front-raise':   {v:'f',m:['front_delt']},
+  shrug:           {v:'b',m:['trap']},
+  'upright-row':   {v:'b',m:['trap','lat_delt']},
 };
 
-function applyFrame(fig,pose,k){
-  const jmap={la_sh:fig.la.sh,ra_sh:fig.ra.sh,la_el:fig.la.el,ra_el:fig.ra.el,
-               ll_hp:fig.ll.hp,rl_hp:fig.rl.hp,ll_kn:fig.ll.kn,rl_kn:fig.rl.kn};
-  const a=pose.a||{},b=pose.b||{};
-  for(const key of new Set([...Object.keys(a),...Object.keys(b)])){
-    const j=jmap[key];if(!j)continue;
-    const av=a[key]||[0,0,0],bv=b[key]||[0,0,0];
-    j.rotation.set((av[0]+(bv[0]-av[0])*k)*D,(av[1]+(bv[1]-av[1])*k)*D,(av[2]+(bv[2]-av[2])*k)*D);
-  }
+const BODY=`<g style="filter:drop-shadow(0 0 5px #2a7adf) drop-shadow(0 0 12px #0a3a8a)">
+<ellipse class="bs" cx="40" cy="10" rx="9" ry="10"/>
+<rect class="bs" x="36" y="19" width="8" height="8" rx="2"/>
+<ellipse class="bs" cx="21" cy="26" rx="9" ry="8"/>
+<ellipse class="bs" cx="59" cy="26" rx="9" ry="8"/>
+<rect class="bs" x="23" y="22" width="34" height="7" rx="3"/>
+<rect class="bs" x="28" y="28" width="24" height="36" rx="5"/>
+<rect class="bs" x="14" y="21" width="10" height="34" rx="5"/>
+<rect class="bs" x="56" y="21" width="10" height="34" rx="5"/>
+<rect class="bs" x="15" y="54" width="9" height="23" rx="4"/>
+<rect class="bs" x="56" y="54" width="9" height="23" rx="4"/>
+<rect class="bs" x="30" y="62" width="20" height="12" rx="4"/>
+<rect class="bs" x="26" y="72" width="28" height="10" rx="5"/>
+<rect class="bs" x="27" y="80" width="12" height="40" rx="5"/>
+<rect class="bs" x="41" y="80" width="12" height="40" rx="5"/>
+<ellipse class="bs" cx="33" cy="123" rx="7" ry="5"/>
+<ellipse class="bs" cx="47" cy="123" rx="7" ry="5"/>
+<rect class="bs" x="27" y="126" width="12" height="30" rx="4"/>
+<rect class="bs" x="41" y="126" width="12" height="30" rx="4"/>
+<rect class="bs" x="25" y="155" width="15" height="6" rx="2"/>
+<rect class="bs" x="40" y="155" width="15" height="6" rx="2"/>
+</g>`;
+
+function mkSVG(v){
+const f=v==='f';
+const muscles=f?`
+<ellipse class="m chest" cx="34" cy="41" rx="9" ry="8"/>
+<ellipse class="m chest" cx="46" cy="41" rx="9" ry="8"/>
+<ellipse class="m front_delt" cx="19" cy="27" rx="8" ry="8"/>
+<ellipse class="m front_delt" cx="61" cy="27" rx="8" ry="8"/>
+<ellipse class="m lat_delt" cx="15" cy="30" rx="6" ry="7"/>
+<ellipse class="m lat_delt" cx="65" cy="30" rx="6" ry="7"/>
+<ellipse class="m delt" cx="19" cy="27" rx="8" ry="8"/>
+<ellipse class="m delt" cx="61" cy="27" rx="8" ry="8"/>
+<ellipse class="m delt" cx="15" cy="31" rx="6" ry="7"/>
+<ellipse class="m delt" cx="65" cy="31" rx="6" ry="7"/>
+<ellipse class="m bicep" cx="17" cy="37" rx="5" ry="9"/>
+<ellipse class="m bicep" cx="63" cy="37" rx="5" ry="9"/>
+<ellipse class="m tricep" cx="13" cy="37" rx="5" ry="9"/>
+<ellipse class="m tricep" cx="67" cy="37" rx="5" ry="9"/>
+<rect class="m abs" x="33" y="56" width="6" height="5" rx="2"/>
+<rect class="m abs" x="41" y="56" width="6" height="5" rx="2"/>
+<rect class="m abs" x="33" y="63" width="6" height="5" rx="2"/>
+<rect class="m abs" x="41" y="63" width="6" height="5" rx="2"/>
+<rect class="m abs" x="33" y="70" width="6" height="5" rx="2"/>
+<rect class="m abs" x="41" y="70" width="6" height="5" rx="2"/>
+<ellipse class="m quad" cx="33" cy="98" rx="7" ry="17"/>
+<ellipse class="m quad" cx="47" cy="98" rx="7" ry="17"/>
+<ellipse class="m glute" cx="30" cy="80" rx="9" ry="7"/>
+<ellipse class="m glute" cx="50" cy="80" rx="9" ry="7"/>
+<ellipse class="m calf" cx="33" cy="139" rx="6" ry="12"/>
+<ellipse class="m calf" cx="47" cy="139" rx="6" ry="12"/>
+`:`
+<polygon class="m trap" points="40,25 54,37 40,51 26,37"/>
+<ellipse class="m lat" cx="21" cy="50" rx="9" ry="15"/>
+<ellipse class="m lat" cx="59" cy="50" rx="9" ry="15"/>
+<ellipse class="m lat_delt" cx="15" cy="27" rx="7" ry="7"/>
+<ellipse class="m lat_delt" cx="65" cy="27" rx="7" ry="7"/>
+<ellipse class="m delt" cx="15" cy="27" rx="8" ry="8"/>
+<ellipse class="m delt" cx="65" cy="27" rx="8" ry="8"/>
+<ellipse class="m tricep" cx="13" cy="37" rx="5" ry="10"/>
+<ellipse class="m tricep" cx="67" cy="37" rx="5" ry="10"/>
+<ellipse class="m rhomboid" cx="40" cy="45" rx="11" ry="9"/>
+<ellipse class="m bicep" cx="17" cy="37" rx="3" ry="8"/>
+<ellipse class="m bicep" cx="63" cy="37" rx="3" ry="8"/>
+<ellipse class="m glute" cx="33" cy="83" rx="9" ry="10"/>
+<ellipse class="m glute" cx="47" cy="83" rx="9" ry="10"/>
+<ellipse class="m hamstring" cx="33" cy="103" rx="7" ry="17"/>
+<ellipse class="m hamstring" cx="47" cy="103" rx="7" ry="17"/>
+<ellipse class="m calf" cx="33" cy="139" rx="6" ry="12"/>
+<ellipse class="m calf" cx="47" cy="139" rx="6" ry="12"/>
+`;
+return`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 168" style="height:168px;display:block;margin:auto">`
++`<rect width="80" height="168" fill="#030d1a"/>`
++BODY+muscles+`</svg>`;
 }
 
-function initBox(box){
-  const key=box.dataset.anim;
-  const pose=P[key]||P.bench;
-  const w=box.clientWidth||320,h=box.clientHeight||180;
-  const canvas=document.createElement('canvas');
-  canvas.style.cssText='position:absolute;inset:0;width:100%;height:100%;border-radius:12px;';
-  box.style.position='relative';
-  box.insertBefore(canvas,box.firstChild);
-  const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
-  renderer.setSize(w,h,false);
-  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-  renderer.outputColorSpace=THREE.SRGBColorSpace;
-  const scene=new THREE.Scene();
-  const[cx,cy,cz]=pose.cam||[0,0.1,2.9];
-  const camera=new THREE.PerspectiveCamera(40,w/h,0.1,50);
-  camera.position.set(cx,cy,cz);
-  camera.lookAt(0,0.73,0);
-  scene.add(new THREE.AmbientLight(0xffffff,0.72));
-  const sun=new THREE.DirectionalLight(0xffffff,1.9);
-  sun.position.set(2,4,3);scene.add(sun);
-  const fill=new THREE.DirectionalLight(0x5588ff,0.45);
-  fill.position.set(-2,1,-2);scene.add(fill);
-  const fig=buildFig();
-  if(pose.torsoX!==undefined)fig.torso.rotation.x=pose.torsoX*D;
-  if(pose.sHpX!==undefined){fig.ll.hp.rotation.x=pose.sHpX*D;fig.rl.hp.rotation.x=pose.sHpX*D;}
-  scene.add(fig.root);
-  let t=0;
-  function tick(){t+=0.014;applyFrame(fig,pose,(Math.sin(t)+1)/2);renderer.render(scene,camera);box._rafId=requestAnimationFrame(tick);}
-  tick();
-  box._renderer=renderer;
-}
-
-function tearBox(box){
-  if(box._rafId)cancelAnimationFrame(box._rafId);
-  if(box._renderer){box._renderer.dispose();delete box._renderer;}
-}
-
-const io=new IntersectionObserver(entries=>{
-  for(const e of entries){
-    if(e.isIntersecting&&!e.target._renderer)initBox(e.target);
-    else if(!e.isIntersecting&&e.target._renderer)tearBox(e.target);
-  }
-},{threshold:0.1});
-
-document.querySelectorAll('.anim-box[data-anim]').forEach(b=>io.observe(b));
+document.querySelectorAll('.anim-box[data-anim]').forEach(box=>{
+  const{v,m}=MM[box.dataset.anim]||{v:'f',m:[]};
+  box.insertAdjacentHTML('afterbegin',mkSVG(v));
+  const svg=box.querySelector('svg');
+  m.forEach(cls=>svg.querySelectorAll('.m.'+cls).forEach(el=>el.classList.add('active')));
+});
 </script>
 </body>
 </html>
