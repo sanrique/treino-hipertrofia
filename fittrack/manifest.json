@@ -1,0 +1,19 @@
+{
+  "name": "FitTrack Trainer",
+  "short_name": "FitTrack",
+  "description": "Painel do personal trainer",
+  "start_url": "./trainer.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#07070f",
+  "theme_color": "#ff7a00",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
