@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<!-- v2 -->
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FitTrack — Trainer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ff7a00">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FitTrack">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <script src="fittrack-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    :root {
+      --bg:#07070f; --surface:#0d0d18; --card:#111120; --border:#1a1a30; --border-m:#242440;
+      --accent:#ff7a00; --acc-dim:rgba(255,122,0,.1); --acc-glow:rgba(255,122,0,.3);
+      --prot:#38d9f5; --carb:#ff9f43; --fat:#bf7fff; --danger:#ff5555; --warn:#ffcc00;
+      --text:#ededf8; --sub:#8888aa; --dim:#44445a;
+      --ff-d:'Barlow Condensed',sans-serif; --ff-b:'Barlow',sans-serif; --ff-m:'Space Mono',monospace;
+      --r:14px; --r-sm:8px;
+    }
+    html,body { background:var(--bg); color:var(--text); font-family:var(--ff-b); -webkit-font-smoothing:antialiased; min-height:100%; overflow-x:hidden; }
+    body::before { content:''; position:fixed; inset:0;
+      background:
+        radial-gradient(ellipse 70% 50% at 50% -10%, rgba(255,122,0,.12) 0%, transparent 60%),
+        radial-gradient(ellipse 45% 35% at 90% 85%, rgba(56,217,245,.07) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 10% 60%, rgba(191,127,255,.05) 0%, transparent 60%);
+      pointer-events:none; z-index:0; }
+    input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
+    input[type=number]{-moz-appearance:textfield;}
+    ::-webkit-scrollbar{width:3px;} ::-webkit-scrollbar-track{background:transparent;} ::-webkit-scrollbar-thumb{background:var(--border-m);border-radius:2px;}
+    .app{position:relative;z-index:1;max-width:430px;margin:0 auto;min-height:100vh;}
+
+    /* ── ANIMATED BLOBS ── */
+    .blob { position:fixed; border-radius:50%; filter:blur(120px); pointer-events:none; z-index:0; }
+    .blob-1 { width:600px; height:600px; background:rgba(255,122,0,.10); top:-200px; right:-200px; animation:float-blob 28s ease-in-out infinite; }
+    .blob-2 { width:500px; height:500px; background:rgba(56,217,245,.07); bottom:-150px; left:-180px; animation:float-blob 22s ease-in-out infinite; animation-delay:-9s; }
+    .blob-3 { width:420px; height:420px; background:rgba(191,127,255,.06); top:38%; right:-130px; animation:float-blob 32s ease-in-out infinite; animation-delay:-17s; }
+    @keyframes float-blob { 0%,100%{transform:translate(0,0) scale(1)} 33%{transform:translate(-40px,35px) scale(1.06)} 66%{transform:translate(35px,-25px) scale(.94)} }
+
+    /* ── HEADER ── */
+    .hdr{padding:48px 18px 14px;position:sticky;top:0;z-index:10;background:linear-gradient(180deg,rgba(7,7,15,.97) 72%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}
+    .hdr-top{display:flex;align-items:center;justify-content:space-between;}
+    .trainer-badge{font-family:var(--ff-m);font-size:8px;letter-spacing:2px;text-transform:uppercase;color:#070709;background:var(--accent);padding:3px 8px;border-radius:4px;font-weight:700;}
+    .cfg-btn{width:34px;height:34px;background:transparent;border:1px solid var(--border-m);border-radius:50%;color:var(--sub);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+    .cfg-btn:hover{border-color:var(--accent);color:var(--accent);}
+    .hdr-right{display:flex;align-items:center;gap:10px;}
+    .hdr-name{font-family:var(--ff-d);font-size:26px;font-weight:900;letter-spacing:2px;margin-top:4px;}
+    .hdr-sub{font-family:var(--ff-m);font-size:9px;color:var(--sub);letter-spacing:1.5px;margin-top:2px;}
+
+    /* ── STATS ── */
+    .stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:0 16px 16px;}
+    .stat-card{background:rgba(15,15,32,.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.07);box-shadow:0 8px 32px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.05);border-radius:var(--r-sm);padding:11px;text-align:center;}
+    .stat-card.warn{border-color:rgba(255,204,0,.3);}
+    .stat-val{font-family:var(--ff-m);font-size:22px;font-weight:700;line-height:1;}
+    .stat-val.accent{color:var(--accent);} .stat-val.warn{color:var(--warn);}
+    .stat-lbl{font-family:var(--ff-d);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--sub);margin-top:3px;}
+
+    /* ── SECTION ── */
+    .sec{padding:0 16px;margin-bottom:14px;}
+    .sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+    .sec-lbl{font-family:var(--ff-d);font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--sub);padding-left:10px;border-left:2px solid var(--accent);}
+
+    /* ── STUDENT SEARCH ── */
+    .student-search-wrap{position:relative;margin-bottom:10px;}
+    .student-search-inp{width:100%;background:rgba(15,15,32,.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:9px 13px 9px 37px;color:var(--text);font-family:var(--ff-b);font-size:13px;outline:none;transition:border-color .2s;}
+    .student-search-inp::placeholder{color:var(--dim);}
+    .student-search-inp:focus{border-color:rgba(255,122,0,.35);}
+    .ss-ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--dim);pointer-events:none;}
+
+    /* ── STUDENT CARDS ── */
+    .student-list{display:flex;flex-direction:column;gap:9px;}
+    .student-card{background:rgba(15,15,32,.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.07);box-shadow:0 8px 32px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.05);border-radius:var(--r);padding:13px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .2s;}
+    .student-card:hover{border-color:rgba(255,122,0,.2);box-shadow:0 4px 20px rgba(0,0,0,.3);}
+    .s-avatar{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-family:var(--ff-d);font-size:17px;font-weight:900;flex-shrink:0;overflow:hidden;}
+    .s-avatar img{width:100%;height:100%;object-fit:cover;}
+    .s-info{flex:1;min-width:0;}
+    .s-name{font-family:var(--ff-d);font-size:17px;font-weight:800;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .s-meta{font-family:var(--ff-m);font-size:9px;color:var(--sub);margin-top:2px;letter-spacing:.3px;}
+    .s-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
+    .s-status{font-family:var(--ff-m);font-size:8px;padding:3px 7px;border-radius:4px;letter-spacing:.5px;text-transform:uppercase;}
+    .s-status.active{color:var(--accent);background:var(--acc-dim);border:1px solid rgba(255,122,0,.25);}
+    .s-status.inactive{color:var(--sub);background:rgba(255,255,255,.04);border:1px solid var(--border-m);}
+    .s-notif{width:18px;height:18px;background:var(--warn);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--ff-m);font-size:9px;color:#070709;font-weight:700;}
+
+    /* ── ACTIVITY DOTS ── */
+    .act-dots{display:flex;gap:3px;margin-top:5px;}
+    .act-dot{width:6px;height:6px;border-radius:50%;background:var(--border-m);}
+    .act-dot.on{background:var(--accent);box-shadow:0 0 5px rgba(255,122,0,.5);}
+
+    /* ── GOAL PILL ── */
+    .goal-pill{font-family:var(--ff-d);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:2px 7px;border-radius:4px;}
+    .goal-pill.massa{color:#38d9f5;background:rgba(56,217,245,.1);border:1px solid rgba(56,217,245,.2);}
+    .goal-pill.emagrecer{color:var(--carb);background:rgba(255,159,67,.1);border:1px solid rgba(255,159,67,.2);}
+    .goal-pill.definir{color:var(--fat);background:rgba(191,127,255,.1);border:1px solid rgba(191,127,255,.2);}
+    .goal-pill.manter{color:var(--sub);background:rgba(255,255,255,.05);border:1px solid var(--border-m);}
+
+    /* ── FAB ── */
+    .fab-wrap{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:398px;z-index:20;}
+    .fab{width:100%;padding:15px;background:linear-gradient(105deg,#ff7a00,#ffaa00);color:#050508;border:none;border-radius:var(--r);font-family:var(--ff-d);font-size:14px;font-weight:900;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:all .25s;box-shadow:0 4px 30px rgba(255,122,0,.35),inset 0 1px 0 rgba(255,255,255,.2);}
+    .fab:hover{transform:translateY(-3px);box-shadow:0 10px 42px rgba(255,122,0,.5),inset 0 1px 0 rgba(255,255,255,.2);}
+    .fab:active{transform:translateY(0);filter:brightness(.9);}
+
+    /* ── OVERLAY ── */
+    .overlay{position:fixed;inset:0;background:rgba(2,2,10,.9);backdrop-filter:blur(8px);z-index:100;opacity:0;pointer-events:none;transition:opacity .3s;}
+    .overlay.open{opacity:1;pointer-events:all;}
+
+    /* ── STUDENT DETAIL PANEL ── */
+    .detail-panel{position:fixed;top:0;right:0;bottom:0;width:100%;max-width:430px;background:rgba(9,9,22,.92);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);z-index:200;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);overflow:hidden;}
+    .detail-panel.open{transform:translateX(0);}
+    .dp-hdr{padding:44px 18px 12px;flex-shrink:0;background:linear-gradient(180deg,rgba(7,7,15,.97) 70%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}
+    .dp-hdr-top{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+    .dp-back{width:34px;height:34px;border:1px solid var(--border-m);border-radius:50%;background:rgba(15,15,32,.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--sub);transition:all .2s;flex-shrink:0;}
+    .dp-back:hover{border-color:var(--accent);color:var(--accent);}
+
+    /* Student photo in detail */
+    .dp-photo{width:50px;height:50px;border-radius:14px;overflow:hidden;cursor:pointer;flex-shrink:0;position:relative;background:rgba(15,15,32,.65);border:2px solid var(--border-m);display:flex;align-items:center;justify-content:center;transition:border-color .2s;}
+    .dp-photo:hover{border-color:var(--accent);}
+    .dp-photo img{width:100%;height:100%;object-fit:cover;}
+    .dp-photo .initials{font-family:var(--ff-d);font-size:17px;font-weight:900;}
+    .dp-photo .photo-overlay{position:absolute;inset:0;background:rgba(255,122,0,.15);display:none;align-items:center;justify-content:center;}
+    .dp-photo:hover .photo-overlay{display:flex;}
+
+    .dp-name-goal{flex:1;min-width:0;}
+    .dp-student-name{font-family:var(--ff-d);font-size:22px;font-weight:900;letter-spacing:1px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .dp-meta{font-family:var(--ff-m);font-size:9px;color:var(--sub);letter-spacing:1px;margin-top:3px;}
+    .dp-body{flex:1;overflow-y:auto;}
+
+    /* ── SHARE ROW ── */
+    .share-row{display:flex;gap:8px;padding:0 16px 10px;}
+    .share-btn{flex:1;padding:10px;border-radius:var(--r-sm);border:1px solid;font-family:var(--ff-d);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s;}
+    .share-btn.link-btn{color:var(--accent);border-color:rgba(255,122,0,.3);background:var(--acc-dim);}
+    .share-btn.link-btn:hover{background:rgba(255,122,0,.18);}
+    .share-btn.qr-btn{color:var(--prot);border-color:rgba(56,217,245,.3);background:rgba(56,217,245,.08);}
+    .share-btn.qr-btn:hover{background:rgba(56,217,245,.15);}
+    .copy-feedback{font-family:var(--ff-m);font-size:9px;color:var(--accent);text-align:center;padding:0 16px 8px;display:none;letter-spacing:1px;}
+    .copy-feedback.show{display:block;}
+
+    /* ── NOTES TEXTAREA ── */
+    .notes-ta{width:100%;background:rgba(16,16,36,.5);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.07);border-radius:var(--r-sm);padding:10px 12px;color:var(--text);font-family:var(--ff-b);font-size:13px;line-height:1.5;resize:none;outline:none;min-height:72px;transition:border-color .2s;box-sizing:border-box;}
+    .notes-ta::placeholder{color:var(--dim);}
+    .notes-ta:focus{border-color:rgba(255,122,0,.3);}
+
+    /* ── TREINO TABS (A/B/C/D) ── */
+    .treino-tabs{display:flex;gap:5px;padding:0 16px 10px;overflow-x:auto;scrollbar-width:none;align-items:center;}
+    .treino-tabs::-webkit-scrollbar{display:none;}
+    .treino-tab{flex-shrink:0;width:40px;height:40px;background:rgba(15,15,32,.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.07);border-radius:10px;font-family:var(--ff-d);font-size:18px;font-weight:900;letter-spacing:1px;color:var(--sub);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;}
+    .treino-tab.on{background:var(--acc-dim);border-color:rgba(255,122,0,.4);color:var(--accent);}
+    .treino-tab.add-tab{border-style:dashed;border-color:var(--border-m);font-size:22px;color:var(--dim);}
+    .treino-tab.add-tab:hover{border-color:var(--accent);color:var(--accent);}
+
+    /* ── TREINO NOME ROW ── */
+    .treino-nome-row{display:flex;align-items:center;gap:8px;padding:0 16px 10px;}
+    .treino-nome{font-family:var(--ff-d);font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--sub);flex:1;outline:none;background:transparent;border:none;cursor:text;}
+    .treino-nome:focus{color:var(--text);border-bottom:1px solid var(--accent);}
+    .icon-btn{width:28px;height:28px;background:transparent;border:1px solid var(--border-m);border-radius:7px;color:var(--dim);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+    .icon-btn:hover{border-color:var(--accent);color:var(--accent);}
+    .icon-btn.danger:hover{border-color:var(--danger);color:var(--danger);}
+
+    /* Delete confirm inline */
+    .del-confirm{margin:0 16px 10px;padding:11px 13px;background:linear-gradient(90deg,rgba(255,85,85,.08),transparent);border:1px solid rgba(255,85,85,.25);border-radius:var(--r-sm);display:none;}
+    .del-confirm.show{display:block;}
+    .del-confirm-txt{font-family:var(--ff-d);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--danger);margin-bottom:8px;}
+    .del-confirm-btns{display:flex;gap:7px;}
+    .dcb{flex:1;padding:8px;border-radius:6px;border:1px solid;font-family:var(--ff-d);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+    .dcb.yes{color:var(--danger);border-color:rgba(255,85,85,.3);background:rgba(255,85,85,.08);}
+    .dcb.yes:hover{background:rgba(255,85,85,.18);}
+    .dcb.no{color:var(--sub);border-color:var(--border-m);background:transparent;}
+    .dcb.no:hover{border-color:var(--accent);color:var(--accent);}
+
+    /* Delete student */
+    .del-student-btn{width:100%;padding:11px;background:transparent;border:1px solid rgba(255,85,85,.25);border-radius:var(--r-sm);color:var(--danger);font-family:var(--ff-d);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+    .del-student-btn:hover{background:rgba(255,85,85,.08);border-color:rgba(255,85,85,.5);}
+    .del-student-confirm{display:none;margin-top:8px;}
+    .del-student-confirm.show{display:block;}
+
+    /* ── EXERCISE CARDS ── */
+    .ex-list{display:flex;flex-direction:column;gap:9px;padding:0 16px;}
+    .ex-card{background:rgba(15,15,32,.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.07);box-shadow:0 8px 32px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.05);border-radius:var(--r);padding:12px;transition:all .25s;animation:fadeIn .3s ease;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+    .ex-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+    .ex-name{font-family:var(--ff-d);font-size:16px;font-weight:800;letter-spacing:.5px;}
+    .ex-grp{font-family:var(--ff-d);font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--sub);background:rgba(15,15,32,.65);border:1px solid rgba(255,255,255,.07);border-radius:4px;padding:2px 6px;}
+    .ex-del{width:26px;height:26px;background:transparent;border:1px solid var(--border-m);border-radius:6px;color:var(--dim);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+    .ex-del:hover{border-color:var(--danger);color:var(--danger);background:rgba(255,85,85,.08);}
+    .series-hdr{display:grid;grid-template-columns:24px 1fr 1fr 30px;gap:5px;padding:0 3px;margin-bottom:3px;}
+    .sh{font-family:var(--ff-d);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);text-align:center;}
+    .serie-row{display:grid;grid-template-columns:24px 1fr 1fr 30px;gap:5px;align-items:center;padding:2px 0;}
+    .sn{font-family:var(--ff-m);font-size:10px;color:var(--dim);text-align:center;}
+    .si{background:rgba(16,16,36,.5);border:1px solid rgba(255,255,255,.07);border-radius:6px;padding:6px;color:var(--text);font-family:var(--ff-m);font-size:12px;text-align:center;outline:none;width:100%;transition:border-color .2s;}
+    .si:focus{border-color:var(--accent);}
+    .add-serie{margin-top:7px;width:100%;padding:7px;background:transparent;border:1px dashed var(--border-m);border-radius:8px;color:var(--sub);font-family:var(--ff-d);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+    .add-serie:hover{border-color:var(--accent);color:var(--accent);}
+    .add-ex-btn{margin:12px 16px 0;width:calc(100% - 32px);padding:11px;background:transparent;border:1px dashed rgba(255,122,0,.3);border-radius:var(--r-sm);color:var(--accent);font-family:var(--ff-d);font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;}
+    .add-ex-btn:hover{background:var(--acc-dim);border-style:solid;}
+    .empty{text-align:center;padding:28px 0;color:var(--dim);}
+    .empty-txt{font-family:var(--ff-d);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;}
+
+    /* ── SUGGESTIONS ── */
+    .sugg-section{padding:16px 16px 0;margin-top:8px;}
+    .sugg-title{font-family:var(--ff-d);font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--warn);padding-left:10px;border-left:2px solid var(--warn);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+    .sugg-card{background:rgba(15,15,32,.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,204,0,.2);box-shadow:0 8px 32px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.05);border-radius:var(--r-sm);padding:12px;margin-bottom:7px;}
+    .sugg-ex{font-family:var(--ff-d);font-size:13px;font-weight:700;color:var(--warn);margin-bottom:4px;}
+    .sugg-msg{font-family:var(--ff-b);font-size:12px;color:var(--text);line-height:1.4;margin-bottom:8px;}
+    .sugg-date{font-family:var(--ff-m);font-size:8px;color:var(--dim);margin-bottom:8px;}
+    .sugg-actions{display:flex;gap:7px;}
+    .sugg-btn{flex:1;padding:7px;border-radius:6px;border:1px solid;font-family:var(--ff-d);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+    .sugg-btn.approve{color:var(--accent);border-color:rgba(255,122,0,.3);background:var(--acc-dim);}
+    .sugg-btn.approve:hover{background:rgba(255,122,0,.2);}
+    .sugg-btn.dismiss{color:var(--sub);border-color:var(--border-m);background:transparent;}
+    .sugg-btn.dismiss:hover{border-color:var(--danger);color:var(--danger);}
+
+    /* ── MODALS ── */
+    .modal-ov{position:fixed;inset:0;background:rgba(4,4,12,.88);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:300;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .3s;}
+    .modal-ov.open{opacity:1;pointer-events:all;}
+    .modal{width:100%;max-width:430px;margin:0 auto;background:rgba(11,11,24,.88);backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);border-radius:20px 20px 0 0;border-top:1px solid var(--border-m);max-height:85vh;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);}
+    .modal-ov.open .modal{transform:translateY(0);}
+    .modal-handle{width:36px;height:4px;background:var(--border-m);border-radius:2px;margin:12px auto 0;flex-shrink:0;}
+    .modal-head{padding:13px 18px 12px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+    .modal-title{font-family:var(--ff-d);font-size:18px;font-weight:900;letter-spacing:2.5px;text-transform:uppercase;}
+    .modal-close{width:28px;height:28px;background:rgba(15,15,32,.65);border:1px solid var(--border-m);border-radius:50%;color:var(--sub);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+    .modal-close:hover{border-color:var(--danger);color:var(--danger);}
+    .modal-body{flex:1;overflow-y:auto;padding:0 18px 28px;}
+    .fg{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
+    .fg-lbl{font-family:var(--ff-d);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--sub);}
+    .fg-inp{background:rgba(15,15,32,.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:10px 12px;color:var(--text);font-family:var(--ff-b);font-size:14px;outline:none;width:100%;transition:border-color .2s;}
+    .fg-inp::placeholder{color:var(--dim);}
+    .fg-inp:focus{border-color:var(--accent);}
+    .obj-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+    .obj-opt{padding:11px;background:rgba(15,15,32,.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.07);border-radius:var(--r-sm);text-align:center;cursor:pointer;transition:all .2s;}
+    .obj-opt.on{background:var(--acc-dim);border-color:rgba(255,122,0,.35);}
+    .obj-opt-ico{font-size:18px;margin-bottom:4px;}
+    .obj-opt-lbl{font-family:var(--ff-d);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+    .obj-opt.on .obj-opt-lbl{color:var(--accent);}
+    .submit-btn{width:100%;padding:13px;background:linear-gradient(105deg,#ff7a00,#ffaa00);color:#050508;border:none;border-radius:10px;font-family:var(--ff-d);font-size:13px;font-weight:900;letter-spacing:2.5px;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+    .submit-btn:hover{filter:brightness(1.08);transform:translateY(-1px);}
+
+    /* QR */
+    .qr-box{display:flex;flex-direction:column;align-items:center;gap:14px;padding:10px 0;}
+    .qr-name{font-family:var(--ff-d);font-size:16px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--accent);}
+    #qrCanvas{border-radius:10px;padding:12px;background:#fff;}
+    .qr-link{font-family:var(--ff-m);font-size:9px;color:var(--sub);text-align:center;word-break:break-all;background:rgba(15,15,32,.65);border:1px solid var(--border-m);border-radius:8px;padding:10px;max-width:280px;}
+    .qr-copy{padding:10px 24px;background:var(--acc-dim);border:1px solid rgba(255,122,0,.3);border-radius:8px;color:var(--accent);font-family:var(--ff-d);font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all .2s;}
+    .qr-copy:hover{background:rgba(255,122,0,.2);}
+
+    /* Ex bank */
+    .ex-bank{display:flex;flex-direction:column;gap:7px;}
+    .ebi{background:rgba(15,15,32,.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.07);border-radius:var(--r-sm);padding:11px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all .2s;}
+    .ebi:hover{border-color:var(--accent);}
+    .ebi-name{font-family:var(--ff-d);font-size:14px;font-weight:700;}
+    .ebi-grp{font-family:var(--ff-m);font-size:8.5px;color:var(--sub);margin-top:2px;}
+    .ebi-add{width:28px;height:28px;background:var(--acc-dim);border:1px solid rgba(255,122,0,.3);border-radius:6px;color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:bold;transition:all .2s;}
+    .ebi:hover .ebi-add{background:var(--accent);color:#070709;}
+    .search-wrap{position:relative;margin-bottom:11px;}
+    .search-inp{width:100%;background:rgba(15,15,32,.65);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:10px 13px 10px 37px;color:var(--text);font-family:var(--ff-b);font-size:14px;outline:none;transition:border-color .2s;}
+    .search-inp::placeholder{color:var(--dim);}
+    .search-inp:focus{border-color:var(--accent);}
+    .s-ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--dim);pointer-events:none;}
+    .ex-modal-tabs{display:flex;padding:0 18px;border-bottom:1px solid var(--border);flex-shrink:0;}
+    .etab{flex:1;padding:9px 0;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--sub);font-family:var(--ff-d);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:all .2s;margin-bottom:-1px;}
+    .etab.on{color:var(--accent);border-bottom-color:var(--accent);}
+
+    @media(min-width:440px){.fab-wrap{width:398px;}.modal-ov{align-items:center;}.modal{border-radius:20px;max-height:80vh;}.detail-panel{border-radius:20px 0 0 20px;}}
+    .save-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(15,15,32,.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,122,0,.3);border-radius:8px;padding:9px 16px;font-family:var(--ff-m);font-size:10px;color:var(--accent);letter-spacing:1px;z-index:50;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;}
+    .save-toast.show{opacity:1;}
+  </style>
+</head>
+<body>
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+<div class="app">
+
+  <div class="hdr">
+    <div class="hdr-top">
+      <div>
+        <div class="hdr-name" id="trainerName">Carlos</div>
+        <div class="hdr-sub" id="trainerDate"></div>
+      </div>
+      <div class="hdr-right">
+        <span class="trainer-badge">TRAINER PRO</span>
+        <button class="cfg-btn" onclick="openSettings()" title="Configurações">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-row" id="statsRow"></div>
+
+  <div id="suggAlert" style="display:none;margin:0 16px 14px;padding:11px 13px;background:linear-gradient(90deg,rgba(255,204,0,.08),transparent);border:1px solid rgba(255,204,0,.25);border-radius:var(--r-sm);cursor:pointer" onclick="scrollToSugg()">
+    <div style="font-family:var(--ff-d);font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--warn)">⚠ Sugestões pendentes de alunos</div>
+    <div style="font-family:var(--ff-m);font-size:9px;color:var(--sub);margin-top:2px" id="suggAlertTxt"></div>
+  </div>
+
+  <div class="sec">
+    <div class="sec-head"><span class="sec-lbl">Meus Alunos</span></div>
+    <div class="student-search-wrap">
+      <svg class="ss-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="student-search-inp" id="studentSearch" type="text" placeholder="Buscar por nome, telefone ou objetivo..." oninput="filterStudents()">
+    </div>
+    <div class="student-list" id="studentList"></div>
+  </div>
+
+  <div style="height:90px"></div>
+  <div class="fab-wrap"><button class="fab" onclick="openAddStudent()">+ Novo Aluno</button></div>
+</div>
+
+<div class="save-toast" id="saveToast"></div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="closeDetailIfOverlay(event)"></div>
+
+<!-- STUDENT DETAIL PANEL -->
+<div class="detail-panel" id="detailPanel">
+  <div class="dp-hdr">
+    <div class="dp-hdr-top">
+      <button class="dp-back" onclick="closeDetail()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      </button>
+      <div class="dp-photo" id="dpPhoto" onclick="triggerPhotoUpload()">
+        <div class="initials" id="dpInitials">—</div>
+        <div class="photo-overlay">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+      </div>
+      <div class="dp-name-goal">
+        <span class="dp-student-name" id="dpName">—</span>
+        <div style="display:flex;gap:6px;margin-top:4px;align-items:center">
+          <span class="goal-pill" id="dpGoal">—</span>
+          <span style="font-family:var(--ff-m);font-size:8px;color:var(--dim)" id="dpMeta">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhoto(event)">
+
+  <div class="dp-body">
+    <div class="share-row">
+      <button class="share-btn link-btn" onclick="copyLink()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        Copiar Link
+      </button>
+      <button class="share-btn qr-btn" onclick="openQR()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3m0 4h4m-4 0v-4m-3 4h-1"/></svg>
+        QR Code
+      </button>
+    </div>
+    <div class="copy-feedback" id="copyFeedback">✓ Link copiado para a área de transferência</div>
+
+    <!-- Student Notes -->
+    <div style="padding:0 16px 10px;">
+      <textarea id="dpNotes" class="notes-ta" placeholder="Notas do aluno (lesões, restrições, observações...)" onblur="saveNotes(this.value)"></textarea>
+    </div>
+
+    <!-- Treino tabs -->
+    <div class="treino-tabs" id="dpTreinoTabs"></div>
+
+    <!-- Treino nome row -->
+    <div class="treino-nome-row">
+      <input class="treino-nome" id="dpTreinoNome" type="text" value="—" onblur="saveTreinoNome(this.value)" onkeydown="if(event.key==='Enter')this.blur()">
+      <button class="icon-btn danger" onclick="showDelConfirm()" title="Remover treino">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+      </button>
+    </div>
+
+    <!-- Delete confirm -->
+    <div class="del-confirm" id="delConfirm">
+      <div class="del-confirm-txt" id="delConfirmTxt">Remover Treino?</div>
+      <div class="del-confirm-btns">
+        <button class="dcb yes" onclick="deleteTreino()">Sim, remover</button>
+        <button class="dcb no" onclick="hideDelConfirm()">Cancelar</button>
+      </div>
+    </div>
+
+    <!-- Exercise list -->
+    <div class="ex-list" id="dpExList"></div>
+    <button class="add-ex-btn" onclick="openExModal()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Adicionar Exercício
+    </button>
+
+    <!-- Suggestions -->
+    <div class="sugg-section" id="suggSection"></div>
+
+    <!-- Delete Student -->
+    <div style="padding:16px 16px 24px;">
+      <button onclick="showDeleteStudentConfirm()" class="del-student-btn">Deletar Aluno</button>
+      <div class="del-student-confirm" id="delStudentConfirm">
+        <div class="del-confirm-txt">Deletar este aluno permanentemente?</div>
+        <div class="del-confirm-btns">
+          <button class="dcb yes" onclick="deleteStudent()">Sim, deletar</button>
+          <button class="dcb no" onclick="hideDeleteStudentConfirm()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="height:10px"></div>
+  </div>
+</div>
+
+<!-- MODAL: ADD STUDENT -->
+<div class="modal-ov" id="addStudentOv" onclick="onMOvClick(event,'addStudentOv')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <span class="modal-title">Novo Aluno</span>
+      <button class="modal-close" onclick="closeModal('addStudentOv')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form onsubmit="addStudent(event)">
+        <div class="fg"><label class="fg-lbl">Nome completo</label><input class="fg-inp" id="newName" type="text" placeholder="Ex: João Silva" required></div>
+        <div class="fg"><label class="fg-lbl">Contato (WhatsApp)</label><input class="fg-inp" id="newPhone" type="tel" placeholder="(11) 99999-9999"></div>
+        <div class="fg" style="margin-bottom:8px"><label class="fg-lbl">Objetivo</label></div>
+        <div class="obj-grid" id="newObjGrid">
+          <div class="obj-opt on" data-obj="massa" onclick="selectObj(this)"><div class="obj-opt-ico">💪</div><div class="obj-opt-lbl">Ganho de Massa</div></div>
+          <div class="obj-opt" data-obj="emagrecer" onclick="selectObj(this)"><div class="obj-opt-ico">🔥</div><div class="obj-opt-lbl">Emagrecimento</div></div>
+          <div class="obj-opt" data-obj="definir" onclick="selectObj(this)"><div class="obj-opt-ico">⚡</div><div class="obj-opt-lbl">Definição</div></div>
+          <div class="obj-opt" data-obj="manter" onclick="selectObj(this)"><div class="obj-opt-ico">🎯</div><div class="obj-opt-lbl">Manutenção</div></div>
+        </div>
+        <button type="submit" class="submit-btn">Criar Aluno</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD TREINO -->
+<div class="modal-ov" id="addTreinoOv" onclick="onMOvClick(event,'addTreinoOv')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <span class="modal-title" id="addTreinoTitle">Novo Treino</span>
+      <button class="modal-close" onclick="closeModal('addTreinoOv')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <form onsubmit="addTreino(event)">
+        <div class="fg"><label class="fg-lbl" id="addTreinoLabel">Nome do Treino</label><input class="fg-inp" id="newTreinoNome" type="text" placeholder="Ex: Pernas" required></div>
+        <button type="submit" class="submit-btn">Criar Treino</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: QR CODE -->
+<div class="modal-ov" id="qrOv" onclick="onMOvClick(event,'qrOv')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <span class="modal-title">QR Code</span>
+      <button class="modal-close" onclick="closeModal('qrOv')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="qr-box">
+        <div class="qr-name" id="qrStudentName">—</div>
+        <div id="qrCanvas"></div>
+        <div class="qr-link" id="qrLinkText">—</div>
+        <button class="qr-copy" onclick="copyLink()">Copiar Link</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD EXERCISE -->
+<div class="modal-ov" id="exOv" onclick="onMOvClick(event,'exOv')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <span class="modal-title">Exercício</span>
+      <button class="modal-close" onclick="closeModal('exOv')">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="ex-modal-tabs">
+      <button class="etab on" id="et-banco" onclick="switchExTab('banco')">Banco</button>
+      <button class="etab" id="et-custom" onclick="switchExTab('custom')">Personalizado</button>
+    </div>
+    <div class="modal-body" style="padding-top:12px">
+      <div id="ep-banco">
+        <div class="search-wrap">
+          <svg class="s-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input class="search-inp" id="exSearch" type="text" placeholder="Buscar exercício..." oninput="filterEx()">
+        </div>
+        <div class="ex-bank" id="exBankList"></div>
+      </div>
+      <div id="ep-custom" style="display:none">
+        <form onsubmit="addCustomEx(event)">
+          <div class="fg"><label class="fg-lbl">Nome do Exercício</label><input class="fg-inp" id="exCustomName" type="text" placeholder="Ex: Rosca Concentrada" required></div>
+          <div class="fg"><label class="fg-lbl">Grupo Muscular</label><input class="fg-inp" id="exCustomGrp" type="text" placeholder="Ex: Bíceps"></div>
+          <button type="submit" class="submit-btn">Adicionar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-ov" id="settingsOv" onclick="onMOvClick(event,'settingsOv')">
+  <div class="modal" style="padding:24px 20px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div style="font-family:var(--ff-d);font-size:20px;font-weight:800;letter-spacing:1px;">Configurações</div>
+      <button class="dp-back" onclick="closeModal('settingsOv')" style="position:static;opacity:1;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form onsubmit="saveSettings(event)" style="overflow-y:auto;max-height:calc(85vh - 80px);padding-right:2px;">
+      <div style="margin-bottom:16px;">
+        <label style="font-family:var(--ff-m);font-size:9px;letter-spacing:1.5px;color:var(--sub);text-transform:uppercase;display:block;margin-bottom:6px;">Seu nome</label>
+        <input id="cfgName" type="text" class="inp" placeholder="Ex: Carlos Trainer" style="width:100%;" required>
+      </div>
+      <div style="margin-bottom:20px;">
+        <label style="font-family:var(--ff-m);font-size:9px;letter-spacing:1.5px;color:var(--sub);text-transform:uppercase;display:block;margin-bottom:6px;">WhatsApp / Telefone</label>
+        <input id="cfgPhone" type="tel" class="inp" placeholder="Ex: 11999990000" style="width:100%;">
+      </div>
+      <div style="background:var(--acc-dim);border:1px solid var(--acc-glow);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:20px;">
+        <div style="font-family:var(--ff-m);font-size:9px;letter-spacing:1.5px;color:var(--accent);text-transform:uppercase;margin-bottom:6px;">Seu ID de trainer</div>
+        <div style="font-family:var(--ff-m);font-size:10px;color:var(--text);word-break:break-all;" id="cfgTrainerId"></div>
+        <div style="font-size:11px;color:var(--sub);margin-top:6px;">Compartilhe o link do aluno para sincronizar dados via Firebase.</div>
+      </div>
+      <div id="cfgDemoSection" style="background:rgba(255,204,0,.06);border:1px solid rgba(255,204,0,.2);border-radius:var(--r-sm);padding:12px 14px;margin-bottom:20px;display:none;">
+        <div style="font-family:var(--ff-m);font-size:9px;letter-spacing:1.5px;color:var(--warn);text-transform:uppercase;margin-bottom:6px;">Alunos de demonstração</div>
+        <div style="font-size:11px;color:var(--sub);margin-bottom:10px;">Remova os alunos demo e comece com uma conta limpa.</div>
+        <button type="button" onclick="clearDemoStudents()" style="width:100%;padding:8px;background:rgba(255,204,0,.1);border:1px solid rgba(255,204,0,.3);border-radius:var(--r-sm);color:var(--warn);font-family:var(--ff-m);font-size:10px;letter-spacing:1px;cursor:pointer;">Remover alunos demo</button>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px;">
+        <div style="font-family:var(--ff-m);font-size:9px;letter-spacing:1.5px;color:var(--sub);text-transform:uppercase;margin-bottom:10px;">Dados</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <button type="button" onclick="exportDB()" style="padding:9px;background:var(--acc-dim);border:1px solid var(--acc-glow);border-radius:var(--r-sm);color:var(--accent);font-family:var(--ff-m);font-size:10px;letter-spacing:1px;cursor:pointer;">↓ Exportar</button>
+          <button type="button" onclick="document.getElementById('importInput').click()" style="padding:9px;background:var(--surface);border:1px solid var(--border-m);border-radius:var(--r-sm);color:var(--text);font-family:var(--ff-m);font-size:10px;letter-spacing:1px;cursor:pointer;">↑ Importar</button>
+        </div>
+        <input type="file" id="importInput" accept=".json" style="display:none" onchange="importDB(event)">
+      </div>
+      <button type="submit" class="fab" style="width:100%;border-radius:var(--r-sm);font-size:14px;margin-top:16px;">Salvar</button>
+    </form>
+  </div>
+</div>
+
+<script>
+const FIREBASE_CONFIG = window.FITTRACK_FIREBASE_CONFIG || {};
+let fsdb = null;
+try {
+  firebase.initializeApp(FIREBASE_CONFIG);
+  fsdb = firebase.firestore();
+} catch(e) { console.warn('Firebase não inicializado — modo offline'); }
+
+// ── TRAINER ID ─────────────────────────────────────────────
+function getTrainerId() {
+  let tid = localStorage.getItem('fittrack_tid');
+  if (!tid) {
+    tid = 'tr_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,7);
+    localStorage.setItem('fittrack_tid', tid);
+  }
+  return tid;
+}
+const TRAINER_ID = getTrainerId();
+
+const EX_BANK = [
+  {nome:'Supino Reto',grp:'Peito'},{nome:'Supino Inclinado',grp:'Peito'},{nome:'Crucifixo',grp:'Peito'},
+  {nome:'Puxada Frontal',grp:'Costas'},{nome:'Remada Curvada',grp:'Costas'},{nome:'Levantamento Terra',grp:'Costas'},
+  {nome:'Agachamento Livre',grp:'Pernas'},{nome:'Leg Press',grp:'Pernas'},{nome:'Cadeira Extensora',grp:'Pernas'},
+  {nome:'Desenvolvimento',grp:'Ombros'},{nome:'Elevação Lateral',grp:'Ombros'},{nome:'Encolhimento',grp:'Ombros'},
+  {nome:'Rosca Direta',grp:'Bíceps'},{nome:'Rosca Martelo',grp:'Bíceps'},{nome:'Rosca Concentrada',grp:'Bíceps'},
+  {nome:'Tríceps Corda',grp:'Tríceps'},{nome:'Tríceps Testa',grp:'Tríceps'},{nome:'Mergulho no Banco',grp:'Tríceps'},
+  {nome:'Abdominal Crunch',grp:'Core'},{nome:'Prancha',grp:'Core'},{nome:'Elevação de Pernas',grp:'Core'},
+];
+const GOAL_LABELS = {massa:'Ganho de Massa',emagrecer:'Emagrecimento',definir:'Definição',manter:'Manutenção'};
+const AVA_COLORS  = ['rgba(255,122,0,.15)','rgba(56,217,245,.15)','rgba(191,127,255,.15)','rgba(255,159,67,.15)','rgba(255,85,85,.15)'];
+const AVA_BORDERS = ['rgba(255,122,0,.4)','rgba(56,217,245,.4)','rgba(191,127,255,.4)','rgba(255,159,67,.4)','rgba(255,85,85,.4)'];
+const AVA_COLORS_TEXT = ['var(--accent)','var(--prot)','var(--fat)','var(--carb)','var(--danger)'];
+const LETTERS = 'ABCDE';
+
+function buildDefaultDB() {
+  return {
+    isDefault: true,
+    trainer: { name: 'Carlos', phone: '' },
+    students: [
+      {
+        id:'aluno_001', name:'João Silva', phone:'11999990001', objetivo:'massa', photo:null, notes:'',
+        createdAt:'2026-05-01', lastActivity:'2026-05-19', nextExId:20,
+        treinos:[
+          {key:'A',nome:'Peito & Tríceps',ex:[
+            {id:1,nome:'Supino Reto',grp:'Peito',series:[{r:12,w:80},{r:10,w:80},{r:8,w:85}]},
+            {id:2,nome:'Crucifixo',grp:'Peito',series:[{r:12,w:18},{r:12,w:18},{r:10,w:20}]},
+            {id:3,nome:'Tríceps Corda',grp:'Tríceps',series:[{r:15,w:25},{r:15,w:25},{r:12,w:27}]},
+          ]},
+          {key:'B',nome:'Costas & Bíceps',ex:[
+            {id:4,nome:'Puxada Frontal',grp:'Costas',series:[{r:12,w:60},{r:10,w:65},{r:8,w:70}]},
+            {id:5,nome:'Remada Curvada',grp:'Costas',series:[{r:12,w:50},{r:10,w:55},{r:10,w:55}]},
+            {id:6,nome:'Rosca Direta',grp:'Bíceps',series:[{r:12,w:25},{r:12,w:25},{r:10,w:27}]},
+          ]},
+          {key:'C',nome:'Pernas',ex:[
+            {id:7,nome:'Agachamento Livre',grp:'Pernas',series:[{r:12,w:70},{r:10,w:75},{r:8,w:80}]},
+            {id:8,nome:'Leg Press',grp:'Pernas',series:[{r:15,w:120},{r:12,w:130},{r:10,w:140}]},
+            {id:9,nome:'Cadeira Extensora',grp:'Pernas',series:[{r:15,w:50},{r:12,w:55},{r:10,w:60}]},
+          ]},
+          {key:'D',nome:'Ombros',ex:[
+            {id:10,nome:'Desenvolvimento',grp:'Ombros',series:[{r:12,w:40},{r:10,w:42},{r:8,w:45}]},
+            {id:11,nome:'Elevação Lateral',grp:'Ombros',series:[{r:15,w:10},{r:15,w:10},{r:12,w:12}]},
+            {id:12,nome:'Encolhimento',grp:'Ombros',series:[{r:15,w:50},{r:15,w:55},{r:12,w:55}]},
+          ]},
+        ],
+        suggestions:[{id:'s1',exercise:'Supino Reto',msg:'Sinto uma dor no ombro esquerdo. Posso substituir por supino com halteres?',date:'2026-05-19',status:'pending'}],
+        workoutLogs:[]
+      },
+      {
+        id:'aluno_002', name:'Ana Costa', phone:'11999990002', objetivo:'emagrecer', photo:null, notes:'',
+        createdAt:'2026-04-15', lastActivity:'2026-05-20', nextExId:20,
+        treinos:[
+          {key:'A',nome:'Full Body A',ex:[
+            {id:10,nome:'Agachamento Livre',grp:'Pernas',series:[{r:15,w:40},{r:15,w:40},{r:12,w:45}]},
+            {id:11,nome:'Supino Reto',grp:'Peito',series:[{r:12,w:30},{r:12,w:30},{r:10,w:35}]},
+            {id:12,nome:'Puxada Frontal',grp:'Costas',series:[{r:12,w:35},{r:12,w:35},{r:10,w:40}]},
+          ]},
+          {key:'B',nome:'Cardio + Core',ex:[
+            {id:13,nome:'Abdominal Crunch',grp:'Core',series:[{r:20,w:0},{r:20,w:0},{r:15,w:0}]},
+            {id:14,nome:'Prancha',grp:'Core',series:[{r:45,w:0},{r:45,w:0},{r:30,w:0}]},
+            {id:15,nome:'Elevação de Pernas',grp:'Core',series:[{r:15,w:0},{r:15,w:0},{r:12,w:0}]},
+          ]},
+          {key:'C',nome:'Full Body B',ex:[
+            {id:16,nome:'Leg Press',grp:'Pernas',series:[{r:15,w:70},{r:15,w:70},{r:12,w:80}]},
+            {id:17,nome:'Rosca Direta',grp:'Bíceps',series:[{r:12,w:15},{r:12,w:15},{r:10,w:17}]},
+            {id:18,nome:'Tríceps Corda',grp:'Tríceps',series:[{r:12,w:15},{r:12,w:15},{r:10,w:17}]},
+          ]},
+        ],
+        suggestions:[],workoutLogs:[]
+      },
+      {
+        id:'aluno_003', name:'Pedro Alves', phone:'11999990003', objetivo:'definir', photo:null, notes:'',
+        createdAt:'2026-03-20', lastActivity:'2026-05-15', nextExId:20,
+        treinos:[
+          {key:'A',nome:'Peito',ex:[
+            {id:1,nome:'Supino Reto',grp:'Peito',series:[{r:12,w:60},{r:12,w:60},{r:10,w:65}]},
+            {id:2,nome:'Supino Inclinado',grp:'Peito',series:[{r:12,w:50},{r:12,w:50},{r:10,w:55}]},
+            {id:3,nome:'Crucifixo',grp:'Peito',series:[{r:12,w:14},{r:12,w:14},{r:10,w:16}]},
+          ]},
+          {key:'B',nome:'Costas',ex:[
+            {id:4,nome:'Puxada Frontal',grp:'Costas',series:[{r:12,w:55},{r:10,w:60},{r:8,w:65}]},
+            {id:5,nome:'Remada Curvada',grp:'Costas',series:[{r:12,w:45},{r:10,w:50},{r:8,w:55}]},
+            {id:6,nome:'Levantamento Terra',grp:'Costas',series:[{r:10,w:70},{r:8,w:75},{r:8,w:80}]},
+          ]},
+          {key:'C',nome:'Pernas',ex:[
+            {id:7,nome:'Agachamento Livre',grp:'Pernas',series:[{r:12,w:60},{r:10,w:65},{r:8,w:70}]},
+            {id:8,nome:'Leg Press',grp:'Pernas',series:[{r:15,w:100},{r:12,w:110},{r:10,w:120}]},
+            {id:9,nome:'Cadeira Extensora',grp:'Pernas',series:[{r:15,w:45},{r:12,w:50},{r:10,w:55}]},
+          ]},
+          {key:'D',nome:'Ombros',ex:[
+            {id:10,nome:'Desenvolvimento',grp:'Ombros',series:[{r:12,w:35},{r:10,w:38},{r:8,w:40}]},
+            {id:11,nome:'Elevação Lateral',grp:'Ombros',series:[{r:15,w:8},{r:15,w:8},{r:12,w:10}]},
+          ]},
+          {key:'E',nome:'Braços',ex:[
+            {id:12,nome:'Rosca Direta',grp:'Bíceps',series:[{r:12,w:20},{r:12,w:20},{r:10,w:22},{r:10,w:22}]},
+            {id:13,nome:'Rosca Martelo',grp:'Bíceps',series:[{r:12,w:16},{r:12,w:16},{r:10,w:18}]},
+            {id:14,nome:'Tríceps Corda',grp:'Tríceps',series:[{r:12,w:22},{r:12,w:22},{r:10,w:25},{r:10,w:25}]},
+            {id:15,nome:'Tríceps Testa',grp:'Tríceps',series:[{r:12,w:18},{r:12,w:18},{r:10,w:20}]},
+          ]},
+        ],
+        suggestions:[],workoutLogs:[]
+      }
+    ]
+  };
+}
+
+function migrateDB(db) {
+  if (!db.trainer) db.trainer = { name: 'Trainer', phone: '' };
+  if (!db.trainer.phone) db.trainer.phone = '';
+  if (!db.students) db.students = [];
+  db.students.forEach(s => {
+    if (s.dias && !s.treinos) {
+      const entries = Object.values(s.dias);
+      s.treinos = entries.filter(d=>d.ex&&d.ex.length>0).map((d,i)=>({key:LETTERS[i]||String.fromCharCode(65+i),nome:d.nome,ex:d.ex}));
+      if (!s.treinos.length) s.treinos = [{key:'A',nome:'Treino A',ex:[]}];
+      delete s.dias;
+    }
+    if (!s.photo) s.photo = null;
+    if (!s.workoutLogs) s.workoutLogs = [];
+    if (!s.treinos) s.treinos = [{key:'A',nome:'Treino A',ex:[]}];
+    if (s.notes === undefined) s.notes = '';
+    if (!s.suggestions) s.suggestions = [];
+  });
+  return db;
+}
+
+async function loadDB() {
+  const raw = localStorage.getItem('fittrack_trainer');
+  const localDB = raw ? JSON.parse(raw) : buildDefaultDB();
+  if (!fsdb) return migrateDB(localDB);
+  try {
+    const doc = await fsdb.collection('sessions').doc(TRAINER_ID).get();
+    if (doc.exists) {
+      const remoteDB = doc.data().db;
+      localStorage.setItem('fittrack_trainer', JSON.stringify(remoteDB));
+      return migrateDB(remoteDB);
+    }
+  } catch(e) { console.warn('Firestore load failed, using local:', e); }
+  return migrateDB(localDB);
+}
+
+function saveDB() {
+  localStorage.setItem('fittrack_trainer', JSON.stringify(DB));
+  if (fsdb) fsdb.collection('sessions').doc(TRAINER_ID).set({ db: DB }).catch(console.error);
+}
+
+let DB = null;
+let currentStudentId = null;
+let currentTreinoIdx = 0;
+let _filteredEx = [...EX_BANK];
+let studentFilter = '';
+
+function getStudent(id) { return DB.students.find(s=>s.id===id); }
+function currentStudent() { return getStudent(currentStudentId); }
+function currentTreino() { return currentStudent().treinos[currentTreinoIdx]; }
+function genId() { return 'aluno_'+Date.now().toString(36); }
+function getStudentLink(id) { return window.location.href.replace(/trainer\.html.*$/,'aluno.html')+'#id='+id+'&t='+TRAINER_ID; }
+function getInitials(name) { return name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2); }
+function getAvaStyle(idx) {
+  const i=idx%AVA_COLORS.length;
+  return `background:${AVA_COLORS[i]};border:2px solid ${AVA_BORDERS[i]};color:${AVA_COLORS_TEXT[i]}`;
+}
+function daysSince(dateStr) {
+  const d=Math.floor((Date.now()-new Date(dateStr).getTime())/86400000);
+  return d===0?'Hoje':d===1?'Ontem':`${d} dias atrás`;
+}
+function getNextKey(treinos) {
+  const used = treinos.map(t=>t.key);
+  return LETTERS.split('').find(l=>!used.includes(l))||null;
+}
+
+// ── WEEKLY ACTIVITY DOTS ───────────────────────────────────
+function getWeekActivity(s) {
+  return Array.from({length:7}, (_,i) => {
+    const d = new Date(); d.setDate(d.getDate()-(6-i));
+    const ds = d.toISOString().split('T')[0];
+    return s.workoutLogs && s.workoutLogs.some(l => l.date === ds);
+  });
+}
+
+// ── STUDENT SEARCH ─────────────────────────────────────────
+function filterStudents() {
+  studentFilter = document.getElementById('studentSearch').value.toLowerCase();
+  renderStudentList();
+}
+
+// ── RENDER STUDENT LIST ────────────────────────────────────
+function renderStudentList() {
+  const today = new Date().toISOString().split('T')[0];
+  const filtered = DB.students.filter(s => {
+    if (!studentFilter) return true;
+    return s.name.toLowerCase().includes(studentFilter) ||
+           (s.phone && s.phone.includes(studentFilter)) ||
+           (GOAL_LABELS[s.objetivo]||'').toLowerCase().includes(studentFilter);
+  });
+
+  document.getElementById('studentList').innerHTML = filtered.map((s,i)=>{
+    const pending = s.suggestions.filter(sg=>sg.status==='pending').length;
+    const isActive = s.lastActivity===today;
+    const avatarContent = s.photo
+      ? `<img src="${s.photo}" alt="${s.name}">`
+      : getInitials(s.name);
+    const globalIdx = DB.students.indexOf(s);
+    const avatarStyle = s.photo ? '' : getAvaStyle(globalIdx);
+    const activity = getWeekActivity(s);
+    const dotsHtml = `<div class="act-dots">${activity.map(on=>`<div class="act-dot${on?' on':''}"></div>`).join('')}</div>`;
+    return `
+    <div class="student-card" onclick="openDetail('${s.id}')">
+      <div class="s-avatar" style="${avatarStyle}">${avatarContent}</div>
+      <div class="s-info">
+        <div class="s-name">${s.name}</div>
+        <div class="s-meta">${GOAL_LABELS[s.objetivo]} · Treinos: ${s.treinos.map(t=>t.key).join('/')} · ${daysSince(s.lastActivity)}</div>
+        ${dotsHtml}
+      </div>
+      <div class="s-right">
+        <span class="s-status ${isActive?'active':'inactive'}">${isActive?'Ativo':'Inativo'}</span>
+        ${pending>0?`<div class="s-notif">${pending}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── RENDER MAIN ────────────────────────────────────────────
+function renderMain() {
+  document.getElementById('trainerName').textContent = DB.trainer.name;
+  document.getElementById('trainerDate').textContent =
+    new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}).toUpperCase();
+
+  const pendingSugg = DB.students.reduce((a,s)=>a+s.suggestions.filter(sg=>sg.status==='pending').length,0);
+  const today = new Date().toISOString().split('T')[0];
+  const activeToday = DB.students.filter(s=>s.lastActivity===today).length;
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card"><div class="stat-val accent">${DB.students.length}</div><div class="stat-lbl">Alunos</div></div>
+    <div class="stat-card"><div class="stat-val accent">${activeToday}</div><div class="stat-lbl">Ativos Hoje</div></div>
+    <div class="stat-card${pendingSugg>0?' warn':''}"><div class="stat-val${pendingSugg>0?' warn':' accent'}">${pendingSugg}</div><div class="stat-lbl">Sugestões</div></div>`;
+
+  const alert = document.getElementById('suggAlert');
+  if (pendingSugg>0) {
+    alert.style.display='block';
+    document.getElementById('suggAlertTxt').textContent =
+      DB.students.filter(s=>s.suggestions.some(sg=>sg.status==='pending')).map(s=>s.name.split(' ')[0]).join(', ');
+  } else alert.style.display='none';
+
+  renderStudentList();
+}
+
+// ── STUDENT DETAIL ─────────────────────────────────────────
+function openDetail(id) {
+  currentStudentId = id;
+  currentTreinoIdx = 0;
+  const s = currentStudent();
+  renderDetailHeader();
+  renderTreinoTabs();
+  renderExList();
+  renderSuggestions();
+  document.getElementById('dpNotes').value = s.notes || '';
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('detailPanel').classList.add('open');
+  // Hide delete student confirm
+  document.getElementById('delStudentConfirm').classList.remove('show');
+}
+
+function renderDetailHeader() {
+  const s = currentStudent();
+  const idx = DB.students.indexOf(s);
+  const photoEl = document.getElementById('dpPhoto');
+  if (s.photo) {
+    photoEl.innerHTML = `<img src="${s.photo}" alt="${s.name}"><div class="photo-overlay"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>`;
+    photoEl.style.cssText = '';
+  } else {
+    const i = idx % AVA_COLORS.length;
+    photoEl.innerHTML = `<div class="initials" style="color:${AVA_COLORS_TEXT[i]}">${getInitials(s.name)}</div><div class="photo-overlay"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>`;
+    photoEl.style.background = AVA_COLORS[i];
+    photoEl.style.borderColor = AVA_BORDERS[i];
+  }
+  document.getElementById('dpName').textContent = s.name;
+  document.getElementById('dpGoal').className = `goal-pill ${s.objetivo}`;
+  document.getElementById('dpGoal').textContent = GOAL_LABELS[s.objetivo];
+  document.getElementById('dpMeta').textContent = `desde ${new Date(s.createdAt).toLocaleDateString('pt-BR')}`;
+}
+
+function closeDetail() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('detailPanel').classList.remove('open');
+  currentStudentId = null;
+  saveDB();
+  renderMain();
+}
+function closeDetailIfOverlay(e) { if(e.target.id==='overlay') closeDetail(); }
+
+// ── NOTES ─────────────────────────────────────────────────
+function saveNotes(val) {
+  const s = currentStudent();
+  if (s) { s.notes = val.trim(); saveDB(); }
+}
+
+// ── DELETE STUDENT ─────────────────────────────────────────
+function showDeleteStudentConfirm() { document.getElementById('delStudentConfirm').classList.add('show'); }
+function hideDeleteStudentConfirm() { document.getElementById('delStudentConfirm').classList.remove('show'); }
+function deleteStudent() {
+  DB.students = DB.students.filter(s => s.id !== currentStudentId);
+  saveDB(); closeDetail();
+}
+
+// ── TREINO TABS ────────────────────────────────────────────
+function renderTreinoTabs() {
+  const s = currentStudent();
+  const nextKey = getNextKey(s.treinos);
+  document.getElementById('dpTreinoTabs').innerHTML =
+    s.treinos.map((t,i) =>
+      `<button class="treino-tab${i===currentTreinoIdx?' on':''}" onclick="selectTreino(${i})">${t.key}</button>`
+    ).join('') +
+    (nextKey ? `<button class="treino-tab add-tab" onclick="openAddTreino()" title="Adicionar Treino ${nextKey}">+</button>` : '');
+  document.getElementById('dpTreinoNome').value = s.treinos[currentTreinoIdx].nome;
+  hideDelConfirm();
+}
+
+function selectTreino(idx) {
+  currentTreinoIdx = idx;
+  renderTreinoTabs();
+  renderExList();
+}
+
+function saveTreinoNome(val) {
+  const v = val.trim();
+  if (v) { currentTreino().nome = v; saveDB(); renderTreinoTabs(); }
+}
+
+function showDelConfirm() {
+  const s = currentStudent();
+  const t = currentTreino();
+  document.getElementById('delConfirmTxt').textContent = `Remover Treino ${t.key} — "${t.nome}"?`;
+  document.getElementById('delConfirm').classList.add('show');
+}
+function hideDelConfirm() { document.getElementById('delConfirm').classList.remove('show'); }
+
+function deleteTreino() {
+  const s = currentStudent();
+  if (s.treinos.length <= 1) { hideDelConfirm(); return; }
+  s.treinos.splice(currentTreinoIdx, 1);
+  currentTreinoIdx = Math.max(0, currentTreinoIdx-1);
+  saveDB();
+  renderTreinoTabs();
+  renderExList();
+}
+
+function openAddTreino() {
+  const s = currentStudent();
+  const nextKey = getNextKey(s.treinos);
+  if (!nextKey) return;
+  document.getElementById('addTreinoTitle').textContent = `Treino ${nextKey}`;
+  document.getElementById('addTreinoLabel').textContent = `Nome do Treino ${nextKey}`;
+  document.getElementById('newTreinoNome').value = '';
+  openModal('addTreinoOv');
+}
+
+function addTreino(e) {
+  e.preventDefault();
+  const s = currentStudent();
+  const nextKey = getNextKey(s.treinos);
+  if (!nextKey) return;
+  const nome = document.getElementById('newTreinoNome').value.trim() || `Treino ${nextKey}`;
+  s.treinos.push({key:nextKey, nome, ex:[]});
+  currentTreinoIdx = s.treinos.length - 1;
+  saveDB();
+  closeModal('addTreinoOv');
+  renderTreinoTabs();
+  renderExList();
+}
+
+// ── EXERCISES ─────────────────────────────────────────────
+function renderExList() {
+  const t = currentTreino();
+  if (!t) return;
+  document.getElementById('dpTreinoNome').value = t.nome;
+  const list = document.getElementById('dpExList');
+  if (!t.ex.length) {
+    list.innerHTML=`<div class="empty"><div style="font-size:22px;margin-bottom:6px">🏋️</div><div class="empty-txt">Nenhum exercício</div></div>`;
+    return;
+  }
+  list.innerHTML = t.ex.map(ex=>`
+    <div class="ex-card" id="dpex-${ex.id}">
+      <div class="ex-head">
+        <span class="ex-name">${ex.nome}</span>
+        <div style="display:flex;gap:5px;align-items:center">
+          ${ex.grp?`<span class="ex-grp">${ex.grp}</span>`:''}
+          <button class="ex-del" onclick="delEx(${ex.id})">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="series-hdr"><span class="sh">#</span><span class="sh">Reps</span><span class="sh">Kg</span><span></span></div>
+      ${ex.series.map((se,si)=>`
+        <div class="serie-row">
+          <span class="sn">${si+1}</span>
+          <input class="si" type="number" value="${se.r}" min="1" onchange="setSerie(${ex.id},${si},'r',this.value)">
+          <input class="si" type="number" value="${se.w}" min="0" step="0.5" onchange="setSerie(${ex.id},${si},'w',this.value)">
+          <button class="ex-del" onclick="delSerie(${ex.id},${si})" style="opacity:.5">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>`).join('')}
+      <button class="add-serie" onclick="addSerie(${ex.id})">+ Série</button>
+    </div>`).join('');
+}
+
+function delEx(id) {
+  const t = currentTreino();
+  const el = document.getElementById('dpex-'+id);
+  if (el) { el.style.opacity='0'; el.style.transform='translateX(12px)'; }
+  setTimeout(()=>{ t.ex=t.ex.filter(e=>e.id!==id); saveDB(); renderExList(); },220);
+}
+function setSerie(exId,si,field,val) {
+  const ex = currentTreino().ex.find(e=>e.id===exId);
+  if (ex) { ex.series[si][field]=parseFloat(val)||0; saveDB(); }
+}
+function addSerie(exId) {
+  const ex = currentTreino().ex.find(e=>e.id===exId);
+  if (ex) { const last=ex.series[ex.series.length-1]||{r:12,w:0}; ex.series.push({r:last.r,w:last.w}); saveDB(); renderExList(); }
+}
+function delSerie(exId,si) {
+  const ex = currentTreino().ex.find(e=>e.id===exId);
+  if (ex&&ex.series.length>1) { ex.series.splice(si,1); saveDB(); renderExList(); }
+}
+
+// ── SUGGESTIONS ───────────────────────────────────────────
+function renderSuggestions() {
+  const s = currentStudent();
+  const pending = s.suggestions.filter(sg=>sg.status==='pending');
+  const el = document.getElementById('suggSection');
+  if (!pending.length) { el.innerHTML=''; return; }
+  el.innerHTML=`
+    <div class="sugg-title">⚠ Sugestões do Aluno <span style="background:var(--warn);color:#070709;border-radius:10px;padding:1px 7px;font-size:9px">${pending.length}</span></div>
+    ${pending.map(sg=>`
+      <div class="sugg-card">
+        <div class="sugg-ex">📝 ${sg.exercise}</div>
+        <div class="sugg-msg">"${sg.msg}"</div>
+        <div class="sugg-date">${sg.date}</div>
+        <div class="sugg-actions">
+          <button class="sugg-btn approve" onclick="resolveSugg('${sg.id}','approved')">✓ Aprovar</button>
+          <button class="sugg-btn dismiss" onclick="resolveSugg('${sg.id}','dismissed')">✕ Dispensar</button>
+        </div>
+      </div>`).join('')}`;
+}
+function resolveSugg(id,status) {
+  const sg = currentStudent().suggestions.find(x=>x.id===id);
+  if (sg) { sg.status=status; saveDB(); renderSuggestions(); renderMain(); }
+}
+
+// ── ADD STUDENT ────────────────────────────────────────────
+let newObj = 'massa';
+function selectObj(el) {
+  newObj = el.dataset.obj;
+  document.querySelectorAll('#newObjGrid .obj-opt').forEach(b=>b.classList.toggle('on',b===el));
+}
+function addStudent(e) {
+  e.preventDefault();
+  const name  = document.getElementById('newName').value.trim();
+  const phone = document.getElementById('newPhone').value.trim();
+  DB.students.push({
+    id:genId(), name, phone, objetivo:newObj, photo:null, notes:'',
+    createdAt:new Date().toISOString().split('T')[0],
+    lastActivity:new Date().toISOString().split('T')[0],
+    nextExId:1,
+    treinos:[{key:'A',nome:'Treino A',ex:[]}],
+    suggestions:[], workoutLogs:[]
+  });
+  saveDB(); closeModal('addStudentOv'); e.target.reset(); renderMain();
+}
+function openAddStudent() { document.getElementById('addStudentOv').classList.add('open'); }
+
+// ── PHOTO UPLOAD ──────────────────────────────────────────
+function triggerPhotoUpload() { document.getElementById('photoInput').click(); }
+function handlePhoto(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const size = 200;
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const side = Math.min(img.width, img.height);
+      const sx = (img.width-side)/2, sy = (img.height-side)/2;
+      ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
+      currentStudent().photo = canvas.toDataURL('image/jpeg', 0.75);
+      saveDB();
+      renderDetailHeader();
+      renderMain();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  event.target.value = '';
+}
+
+// ── SHARE ─────────────────────────────────────────────────
+function copyLink() {
+  const link = getStudentLink(currentStudentId);
+  navigator.clipboard.writeText(link).then(()=>{
+    const fb = document.getElementById('copyFeedback');
+    fb.classList.add('show');
+    setTimeout(()=>fb.classList.remove('show'),2500);
+  }).catch(()=>prompt('Copie o link abaixo:',link));
+}
+function openQR() {
+  const s = currentStudent();
+  const link = getStudentLink(currentStudentId);
+  document.getElementById('qrStudentName').textContent = s.name;
+  document.getElementById('qrLinkText').textContent = link;
+  const canvas = document.getElementById('qrCanvas');
+  canvas.innerHTML = '';
+  try {
+    new QRCode(canvas,{text:link,width:200,height:200,colorDark:'#111',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.H});
+  } catch(err) {
+    canvas.innerHTML=`<div style="width:200px;height:200px;background:#fff;display:flex;align-items:center;justify-content:center;color:#333;font-size:11px;text-align:center;padding:16px;border-radius:8px">QR Code indisponível<br>Copie o link</div>`;
+  }
+  openModal('qrOv');
+}
+
+// ── EXERCISE MODAL ────────────────────────────────────────
+function openExModal() { openModal('exOv'); renderExBank(); }
+function switchExTab(t) {
+  document.getElementById('ep-banco').style.display  = t==='banco'?'block':'none';
+  document.getElementById('ep-custom').style.display = t==='custom'?'block':'none';
+  document.getElementById('et-banco').classList.toggle('on',t==='banco');
+  document.getElementById('et-custom').classList.toggle('on',t==='custom');
+}
+function filterEx() { renderExBank(document.getElementById('exSearch').value); }
+function renderExBank(q='') {
+  _filteredEx = q ? EX_BANK.filter(e=>e.nome.toLowerCase().includes(q.toLowerCase())||e.grp.toLowerCase().includes(q.toLowerCase())) : [...EX_BANK];
+  document.getElementById('exBankList').innerHTML = _filteredEx.map((ex,i)=>`
+    <div class="ebi" onclick="addExFromBank(${i})">
+      <div><div class="ebi-name">${ex.nome}</div><div class="ebi-grp">${ex.grp}</div></div>
+      <div class="ebi-add">+</div>
+    </div>`).join('');
+}
+function addExFromBank(i) {
+  const s = currentStudent(); const ex = _filteredEx[i]; const t = currentTreino();
+  t.ex.push({id:s.nextExId++,nome:ex.nome,grp:ex.grp,series:[{r:12,w:0},{r:10,w:0},{r:8,w:0}]});
+  saveDB(); closeModal('exOv'); renderExList();
+}
+function addCustomEx(e) {
+  e.preventDefault();
+  const s = currentStudent(); const t = currentTreino();
+  const nome = document.getElementById('exCustomName').value.trim();
+  const grp  = document.getElementById('exCustomGrp').value.trim();
+  t.ex.push({id:s.nextExId++,nome,grp,series:[{r:12,w:0},{r:10,w:0},{r:8,w:0}]});
+  saveDB(); closeModal('exOv'); renderExList(); e.target.reset();
+}
+
+// ── TOAST ──────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('saveToast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ── MODAL HELPERS ─────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function onMOvClick(e,id) { if(e.target===document.getElementById(id)) closeModal(id); }
+function scrollToSugg() {
+  const el = document.getElementById('suggSection');
+  if (el) el.scrollIntoView({behavior:'smooth'});
+}
+
+// ── SETTINGS ──────────────────────────────────────────────
+function openSettings() {
+  document.getElementById('cfgName').value  = DB.trainer.name  || '';
+  document.getElementById('cfgPhone').value = DB.trainer.phone || '';
+  document.getElementById('cfgTrainerId').textContent = TRAINER_ID;
+  const hasDemo = DB.students.some(s => ['aluno_001','aluno_002','aluno_003'].includes(s.id));
+  document.getElementById('cfgDemoSection').style.display = hasDemo ? 'block' : 'none';
+  openModal('settingsOv');
+}
+function saveSettings(e) {
+  e.preventDefault();
+  DB.trainer.name  = document.getElementById('cfgName').value.trim()  || DB.trainer.name;
+  DB.trainer.phone = document.getElementById('cfgPhone').value.trim();
+  delete DB.isDefault;
+  saveDB();
+  document.getElementById('trainerName').textContent = DB.trainer.name;
+  closeModal('settingsOv');
+}
+function clearDemoStudents() {
+  DB.students = DB.students.filter(s => !['aluno_001','aluno_002','aluno_003'].includes(s.id));
+  saveDB(); renderMain(); closeModal('settingsOv');
+}
+function exportDB() {
+  const blob = new Blob([JSON.stringify(DB, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'fittrack-backup.json';
+  a.click();
+}
+function importDB(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (!imported.students) throw new Error('Arquivo inválido');
+      // Merge students: add only those whose IDs don't already exist
+      let added = 0;
+      imported.students.forEach(s => {
+        if (!DB.students.find(x => x.id === s.id)) {
+          DB.students.push(s); added++;
+        }
+      });
+      saveDB(); renderMain(); closeModal('settingsOv');
+      showToast(added ? `${added} aluno(s) importado(s)` : 'Nenhum aluno novo encontrado');
+    } catch(err) { showToast('Erro ao importar: arquivo inválido'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// ── INIT ──────────────────────────────────────────────────
+(async () => {
+  DB = await loadDB();
+  renderMain();
+  if (DB.isDefault) setTimeout(() => openSettings(), 400);
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.error));
+  }
+})();
+</script>
+</body>
+</html>
